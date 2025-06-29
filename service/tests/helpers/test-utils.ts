@@ -3,7 +3,7 @@
  * Common helper functions for testing
  */
 
-import { Express } from 'express';
+import express from 'express';
 import request from 'supertest';
 import {
   RepositoryInfo,
@@ -21,7 +21,30 @@ import {
  * Test API request helper
  */
 export class TestAPIHelper {
-  constructor(private app: Express) {}
+  constructor(private app: express.Application) {}
+
+  /**
+   * Make POST request to ask endpoint
+   */
+  async askQuestion(requestBody: any) {
+    return request(this.app)
+      .post('/api/v1/ask')
+      .send(requestBody);
+  }
+
+  /**
+   * Make GET request to stats endpoint
+   */
+  async getStats() {
+    return request(this.app).get('/api/v1/stats');
+  }
+
+  /**
+   * Make GET request to Gemini health check endpoint
+   */
+  async checkGeminiHealth() {
+    return request(this.app).get('/api/v1/gemini/health');
+  }
 
   /**
    * Make GET request to health endpoint
@@ -50,7 +73,7 @@ export class TestAPIHelper {
  */
 export class MockDataFactory {
   /**
-   * Create mock API request (placeholder for future implementation)
+   * Create mock API request following AskRequest schema
    */
   static createMockRequest(overrides?: any): any {
     return {
@@ -63,23 +86,24 @@ export class MockDataFactory {
   }
 
   /**
-   * Create mock successful response (placeholder for future implementation)
+   * Create mock successful response following AskSuccessResponse schema
    */
   static createMockSuccessResponse(overrides?: any): any {
     return {
       status: 'success',
-      answer: 'This is a test repository.',
+      answer: 'This is a test repository that demonstrates basic functionality.',
       repository: {
         url: 'https://github.com/test/repo',
-        branch: 'main'
+        branch: 'main',
+        commit_hash: 'abc123def456789'
       },
-      execution_time: 1.5,
+      execution_time: 1500,
       ...overrides
     };
   }
 
   /**
-   * Create mock error response (placeholder for future implementation)
+   * Create mock error response following ApiErrorResponse schema
    */
   static createMockErrorResponse(overrides?: any): any {
     return {

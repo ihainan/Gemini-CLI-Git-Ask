@@ -125,10 +125,27 @@ export const spawn = jest.fn().mockImplementation((command: string, args: string
 
 // Mock exec function
 export const exec = jest.fn().mockImplementation((command: string, callback?: Function) => {
-  const result = mockExecResults.get(command) || {
-    stdout: 'Mock command executed successfully',
-    stderr: ''
-  };
+  let result = mockExecResults.get(command);
+  
+  // If no exact match found, provide default behavior based on command pattern
+  if (!result) {
+    if (command.includes('gemini --version')) {
+      result = {
+        stdout: 'gemini version 1.0.0',
+        stderr: ''
+      };
+    } else if (command.includes('gemini')) {
+      result = {
+        stdout: 'This repository contains a Node.js web application with REST API endpoints.',
+        stderr: ''
+      };
+    } else {
+      result = {
+        stdout: 'Mock command executed successfully',
+        stderr: ''
+      };
+    }
+  }
 
   if (callback) {
     setTimeout(() => {

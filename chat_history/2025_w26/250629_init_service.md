@@ -452,3 +452,26 @@ curl -X POST http://localhost:28080/api/v1/ask \
 grep "repository_url_here" logs/service.log | grep -E "(stats|decision|all_files)"
 ``` 
 ````
+
+## API endpoint integration test
+
+```` markdown
+0. 请帮我检查一下 @design.md ，检查下一步我们有哪些工作可以做，你建议优先做哪一个。
+1. API Routes 实现我印象中已经实现了，请验证，如果是，请更新 @design.md （备注：上次修改太多，上下文过长，design.md 没有更新完全）
+2. 请再次检查一下 @design.md ，检查下一步我们有哪些工作可以做，你建议优先做哪一个。
+3. 请帮我实现 API 端点的集成测试 部分。
+4. 请继续修复 ConfigManager 模拟配置问题
+5. 请继续修复剩余测试
+6. （切换到 O3）请分析测试运行失败的原因
+7. 请进行修复
+8. 请检查是否需要更新 @README.md
+9. 请检查是否需要更新 @design.md
+10. 请 git commit 本次任务的修改内容
+````
+
+```` markdown
+优先级最高: 修复 ConfigManager 模拟配置问题
+优先级高: 完善验证错误消息的具体性
+优先级中等: 添加更多的性能和负载测试
+优先级低: 优化测试执行速度和资源使用
+````
