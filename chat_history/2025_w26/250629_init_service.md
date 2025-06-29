@@ -14,7 +14,11 @@
 ## Bootstrap Node.js service with TypeScript
 
 ````markdown
+让我们基于 @design.md ，先构建基础开发环境，包括：
 
+1. 在根目录（不是 ./service 目录）初始化 git 仓库，构建 .gitignore，并把我们用于参考用途的 @/gemini-cli （Gemini-CLI 的原始源码）排除。
+2. 在 service 目录初始化 NodeJS 的开发环境。
+3. 在 service 目录下初始化 config.yaml.example，并复制一份 config.yaml。
 ````
 
 ## Init commit (and build a Git guideline)
@@ -52,7 +56,7 @@ Add examples for running with docker-compose and sample .env.
 ```
 ````
 
-## Initialize testing framework for the service module
+## Implement comprehensive testing framework
 
 ```` markdown
 请为我的 Node.js + TypeScript + Express.js 项目初始化完整的测试框架。项目详情：
@@ -98,9 +102,9 @@ Add examples for running with docker-compose and sample .env.
 5. 设置测试脚本和覆盖率报告
 
 项目当前已有 package.json 和 tsconfig.json，请在现有配置基础上进行扩展。
-```
+````
 
-service/tests/README.md was ganerated for this task.
+### LLM Key Responses
 
 ```` markdown
 🎯 我们已经完成的测试工作
@@ -198,7 +202,7 @@ Apply
 就像我们已经建好了汽车工厂，制造了所有检测设备，但汽车的发动机、轮子、方向盘还没有造出来。一旦这些核心部件做好了，我们就能立即对它们进行全面的质量检测！
 ````
 
-## Implement Type Definitions
+## Implement complete type definitions
 
 ```` markdown
 0. 请帮我检查一下 @design.md ，检查下一步我们有哪些工作可以做，你建议优先做哪一个。
@@ -208,7 +212,7 @@ Apply
 4. 请 git commit 本地任务的修改内容
 ````
 
-LLM Response:
+### LLM Key Responses
 
 ```` markdown
 📊 当前项目状态
@@ -275,4 +279,21 @@ Gemini CLI 命令执行
 开发效率：有了类型定义，后续开发会更快更安全
 测试支持：现有的测试框架可以立即使用这些类型
 并行开发：类型定义完成后，可以并行开发 Repository Manager 和 Gemini CLI Executor
+````
+
+## Implement Repository Manager
+
+```` markdown
+0. 请帮我检查一下 @design.md ，检查下一步我们有哪些工作可以做，你建议优先做哪一个。
+1. 请帮我实现 Repository Management 部分。
+2. 请检查 @/tests ，结合 @README.md  检查我们是否需要根据我们上面的修改，更新我们的测试以及文档。
+3. 请检查是否需要更新 @design.md
+4. 请 git commit 本地任务的修改内容
+````
+
+### LLM Key Responses
+
+```` markdown
+我发现 test-utils.ts 文件中有很多我们目前类型系统中不存在的类型引用。这是因为这个文件是为完整的 API 系统设计的，但我们目前只实现了 Repository Manager 部分。
+让我重构这个文件，暂时移除那些还不存在的 API 类型，专注于已实现的 Repository 相关功能：
 ````

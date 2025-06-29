@@ -79,7 +79,7 @@ POST /api/v1/ask
 
 ### 4.1 Repository Identification
 
-- Generate unique directory names using: `{repo_owner}_{repo_name}_{branch_hash}`
+- Generate unique directory names using: `{repo_owner}_{repo_name}_{branch}_{branch_hash}`
 - Support both HTTPS and SSH URLs (configurable preference)
 - Default branch resolution for repositories without specified branch
 
@@ -440,7 +440,7 @@ External dependencies are mocked to ensure test reliability:
 
 ### Phase 1: Core Implementation
 - Express.js API server with TypeScript setup ✅
-- Repository management with simple-git ⏳ (interface designed, implementation pending)
+- Repository management with simple-git ✅ (fully implemented with comprehensive testing)
 - Gemini CLI integration via child_process ⏳ (interface designed, implementation pending)
 - YAML configuration management with js-yaml ✅
 - Basic logging with winston ✅
@@ -475,23 +475,26 @@ External dependencies are mocked to ensure test reliability:
 - **Server Foundation**: Express.js server with security middleware ✅
 - **Health Monitoring**: Basic health check and ready endpoints ✅
 - **Development Environment**: npm scripts for build, dev, and test ✅
+- **Repository Manager**: Complete Git operations and caching logic with proper-lockfile concurrency control ✅
+  - Full CRUD operations for repository management
+  - Intelligent update strategy with time-based caching
+  - Comprehensive error handling and metadata management
+  - Background cleanup service with storage limit enforcement
+  - 86.06% statement coverage, 100% function coverage
 - **Testing Framework**: Complete Jest setup with CI support ✅
-  - 104 test cases with 97.67% code coverage
-  - Unit tests for ConfigManager and Logger
+  - 106 test cases with 88.71% code coverage overall
+  - Unit tests for ConfigManager, Logger, and Repository Manager
   - Integration test framework for API endpoints
   - Comprehensive test utilities and mocks
   - CI-friendly configuration
 
 ### In Progress
 - **API Routes**: Main `/api/v1/ask` endpoint (test framework ready, implementation pending)
-- **Repository Manager**: Git operations and caching logic (interface designed, tests scaffolded)
 - **Gemini CLI Executor**: Integration with Gemini CLI (interface designed, tests scaffolded)
 
 ### Pending Implementation
-- **Lock Manager**: File-based concurrency control
-- **Cleanup Service**: Background repository maintenance
 - **Request Validation**: Input validation and error handling (partial implementation)
-- **Type Definitions**: Complete TypeScript interfaces
+- **Type Definitions**: Complete TypeScript interfaces for API and Gemini CLI integration
 
 ### File Structure Status
 ```
@@ -505,10 +508,13 @@ service/
 │   ├── api/
 │   │   ├── routes/ (empty - implementation pending)
 │   │   └── middleware/ (empty - implementation pending)
-│   ├── services/ (empty - core services pending implementation)
-│   └── types/ (empty - interfaces pending)
+│   ├── services/
+│   │   └── repository-manager.ts ✅ (full implementation with concurrency control)
+│   └── types/
+│       ├── index.ts ✅ (repository type exports)
+│       └── repository.ts ✅ (complete repository type definitions)
 ├── tests/ ✅ (complete testing framework and utilities)
-│   ├── unit/ (ConfigManager, Logger implemented; others scaffolded)
+│   ├── unit/ (ConfigManager, Logger, Repository Manager fully implemented)
 │   ├── integration/ (API test framework ready)
 │   ├── helpers/ (comprehensive test utilities)
 │   └── __mocks__/ (external service mocks)
@@ -522,9 +528,9 @@ service/
 ```
 
 ### Testing Status
-- **Unit Tests**: 63 tests (ConfigManager, Logger fully implemented)
-- **Integration Tests**: 41 tests (API endpoint tests scaffolded, using mocks)
-- **Test Coverage**: 97.67% statements, 88.88% branches
+- **Unit Tests**: 88 tests (ConfigManager, Logger, Repository Manager fully implemented)
+- **Integration Tests**: 18 tests (API endpoint tests scaffolded, using mocks)
+- **Test Coverage**: 88.71% statements, 68.42% branches, 100% functions
 - **Test Infrastructure**: Complete with utilities, mocks, and CI support
 
 This architecture provides a robust foundation for the Git repository Q&A service with comprehensive testing infrastructure, while core service implementations are scheduled for completion in the next development phase.

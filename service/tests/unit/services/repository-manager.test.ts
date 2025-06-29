@@ -2,10 +2,21 @@
  * Unit tests for RepositoryManager service
  */
 
+/// <reference types="jest" />
+
+import { RepositoryManager } from '../../../src/services/repository-manager';
+import { RepositoryManagerConfig, RepositoryError, RepositoryException } from '../../../src/types';
 import { MockDataFactory, TestEnvironmentUtils } from '../../helpers/test-utils';
+import * as path from 'path';
 
 // Mock simple-git
-jest.mock('simple-git', () => jest.fn());
+jest.mock('simple-git', () => ({
+  simpleGit: jest.fn(),
+  CleanOptions: {
+    FORCE: 'f',
+    RECURSIVE: 'd'
+  }
+}));
 
 // Mock fs/promises
 jest.mock('fs/promises', () => ({
@@ -14,7 +25,8 @@ jest.mock('fs/promises', () => ({
   writeFile: jest.fn(),
   readFile: jest.fn(),
   rm: jest.fn(),
-  stat: jest.fn()
+  stat: jest.fn(),
+  readdir: jest.fn()
 }));
 
 // Mock proper-lockfile
@@ -25,209 +37,389 @@ jest.mock('proper-lockfile', () => ({
 }));
 
 describe('RepositoryManager', () => {
-  // Note: This is a test skeleton for RepositoryManager service
-  // The actual implementation doesn't exist yet, so this serves as a template
-
-  let repositoryManager: any;
+  let repositoryManager: RepositoryManager;
+  let mockConfig: RepositoryManagerConfig;
   const mockFs = require('fs/promises');
   const mockLockfile = require('proper-lockfile');
-  const mockSimpleGit = require('simple-git');
+  const { simpleGit: mockSimpleGit } = require('simple-git');
 
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    mockConfig = {
+      storagePath: './test-repositories',
+      cloneMethod: 'https',
+      cloneDepth: 1,
+      updateThresholdHours: 24,
+      accessTimeoutHours: 72,
+      maxConcurrentOperations: 10,
+      defaultBranch: 'main'
+    };
+
+    repositoryManager = new RepositoryManager(mockConfig);
   });
 
   describe('constructor', () => {
     it('should create RepositoryManager instance', () => {
-      // TODO: Implement when RepositoryManager class is created
-      expect(true).toBe(true); // Placeholder
+      expect(repositoryManager).toBeInstanceOf(RepositoryManager);
     });
 
     it('should initialize with configuration', () => {
-      // TODO: Test configuration initialization
-      expect(true).toBe(true); // Placeholder
+      expect(repositoryManager).toBeDefined();
+      expect(mockFs.mkdir).toHaveBeenCalledWith('./test-repositories', { recursive: true });
+    });
+  });
+
+  describe('getRepositoryInfo', () => {
+    it('should return repository info for new repository', async () => {
+      mockFs.access.mockRejectedValue(new Error('ENOENT'));
+
+      const result = await repositoryManager.getRepositoryInfo('https://github.com/test/repo');
+
+      expect(result).toEqual({
+        url: 'https://github.com/test/repo',
+        branch: 'main',
+        localPath: expect.stringContaining('test_repo_main_'),
+        exists: false,
+        metadata: undefined
+      });
+    });
+
+    it('should return repository info for existing repository', async () => {
+      const mockMetadata = {
+        url: 'https://github.com/test/repo',
+        branch: 'main',
+        last_updated: new Date().toISOString(),
+        last_accessed: new Date().toISOString(),
+        commit_hash: 'abc123',
+        clone_method: 'https' as const
+      };
+
+      mockFs.access.mockResolvedValue(undefined);
+      mockFs.readFile.mockResolvedValue(JSON.stringify(mockMetadata));
+
+      const result = await repositoryManager.getRepositoryInfo('https://github.com/test/repo');
+
+      expect(result).toEqual({
+        url: 'https://github.com/test/repo',
+        branch: 'main',
+        localPath: expect.stringContaining('test_repo_main_'),
+        exists: true,
+        metadata: mockMetadata
+      });
+    });
+
+    it('should handle invalid URL', async () => {
+      await expect(repositoryManager.getRepositoryInfo('invalid-url'))
+        .rejects.toThrow(RepositoryException);
     });
   });
 
   describe('cloneRepository', () => {
     it('should clone repository successfully', async () => {
-      // TODO: Test repository cloning
-      const mockRequest = MockDataFactory.createMockRequest({
-        repository_url: 'https://github.com/test/repo'
-      });
-
-      // Mock successful clone
       const mockGitInstance = {
-        clone: jest.fn().mockResolvedValue(undefined)
+        clone: jest.fn().mockResolvedValue(undefined),
+        log: jest.fn().mockResolvedValue({
+          latest: { hash: 'abc123def456' }
+        })
       };
-      (mockSimpleGit as jest.Mock).mockReturnValue(mockGitInstance);
+      const mockRepoGit = jest.fn().mockReturnValue(mockGitInstance);
+      
+      mockSimpleGit.mockReturnValue({
+        clone: mockGitInstance.clone
+      });
+             mockSimpleGit.mockImplementation((path?: string) => {
+         if (path) return mockGitInstance;
+         return { clone: mockGitInstance.clone };
+       });
 
-      // Test implementation will go here
-      expect(true).toBe(true); // Placeholder
+      mockFs.access.mockRejectedValue(new Error('ENOENT'));
+      mockFs.writeFile.mockResolvedValue(undefined);
+      mockLockfile.lock.mockResolvedValue(jest.fn().mockResolvedValue(undefined));
+
+      const result = await repositoryManager.cloneRepository('https://github.com/test/repo');
+
+      expect(result.exists).toBe(true);
+      expect(result.metadata).toBeDefined();
+      expect(result.metadata?.commit_hash).toBe('abc123def456');
+      expect(mockGitInstance.clone).toHaveBeenCalled();
+      expect(mockFs.writeFile).toHaveBeenCalled();
+    });
+
+    it('should handle existing repository when force is false', async () => {
+      mockFs.access.mockResolvedValue(undefined);
+      mockFs.readFile.mockResolvedValue(JSON.stringify({
+        url: 'https://github.com/test/repo',
+        branch: 'main',
+        last_updated: new Date().toISOString(),
+        last_accessed: new Date().toISOString(),
+        commit_hash: 'abc123',
+        clone_method: 'https'
+      }));
+
+      const result = await repositoryManager.cloneRepository('https://github.com/test/repo');
+
+      expect(result.exists).toBe(true);
+      expect(mockSimpleGit).not.toHaveBeenCalled();
     });
 
     it('should handle clone failures', async () => {
-      // TODO: Test clone error handling
-      expect(true).toBe(true); // Placeholder
-    });
+      const mockGitInstance = {
+        clone: jest.fn().mockRejectedValue(new Error('Clone failed'))
+      };
+      mockSimpleGit.mockReturnValue(mockGitInstance);
+      mockFs.access.mockRejectedValue(new Error('ENOENT'));
+      mockLockfile.lock.mockResolvedValue(jest.fn().mockResolvedValue(undefined));
 
-    it('should handle existing repository', async () => {
-      // TODO: Test handling of already cloned repository
-      expect(true).toBe(true); // Placeholder
+      await expect(repositoryManager.cloneRepository('https://github.com/test/repo'))
+        .rejects.toThrow(RepositoryException);
     });
   });
 
   describe('updateRepository', () => {
+    const mockLocalPath = '/test/path/test_repo_main_abc123';
+
     it('should update repository when stale', async () => {
-      // TODO: Test repository update logic
-      expect(true).toBe(true); // Placeholder
+      const oldDate = new Date();
+      oldDate.setHours(oldDate.getHours() - 25); // 25 hours ago
+
+      const mockMetadata = {
+        url: 'https://github.com/test/repo',
+        branch: 'main',
+        last_updated: oldDate.toISOString(),
+        last_accessed: new Date().toISOString(),
+        commit_hash: 'oldcommit123',
+        clone_method: 'https' as const
+      };
+
+      const mockGitInstance = {
+        clean: jest.fn().mockResolvedValue(undefined),
+        fetch: jest.fn().mockResolvedValue(undefined),
+        pull: jest.fn().mockResolvedValue({ summary: { changes: 5 } }),
+        log: jest.fn().mockResolvedValue({
+          latest: { hash: 'newcommit456' }
+        })
+      };
+
+      mockFs.access.mockResolvedValue(undefined);
+      mockFs.readFile.mockResolvedValue(JSON.stringify(mockMetadata));
+      mockFs.writeFile.mockResolvedValue(undefined);
+      mockSimpleGit.mockReturnValue(mockGitInstance);
+      mockLockfile.lock.mockResolvedValue(jest.fn().mockResolvedValue(undefined));
+
+      const result = await repositoryManager.updateRepository(mockLocalPath);
+
+      expect(result.updated).toBe(true);
+      expect(result.previousHash).toBe('oldcommit123');
+      expect(result.currentHash).toBe('newcommit456');
+      expect(result.changes).toBe(5);
+      expect(mockGitInstance.fetch).toHaveBeenCalled();
+      expect(mockGitInstance.pull).toHaveBeenCalled();
     });
 
     it('should skip update when fresh', async () => {
-      // TODO: Test skip update logic
-      expect(true).toBe(true); // Placeholder
-    });
+      const recentDate = new Date();
+      recentDate.setHours(recentDate.getHours() - 1); // 1 hour ago
 
-    it('should handle update failures', async () => {
-      // TODO: Test update error handling
-      expect(true).toBe(true); // Placeholder
-    });
-  });
+      const mockMetadata = {
+        url: 'https://github.com/test/repo',
+        branch: 'main',
+        last_updated: recentDate.toISOString(),
+        last_accessed: new Date().toISOString(),
+        commit_hash: 'abc123',
+        clone_method: 'https' as const
+      };
 
-  describe('getRepositoryPath', () => {
-    it('should generate correct repository path', () => {
-      // TODO: Test path generation logic
-      const url = 'https://github.com/owner/repo';
-      const branch = 'main';
-      
-      // Expected format: {repo_owner}_{repo_name}_{branch_hash}
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should handle different URL formats', () => {
-      // TODO: Test SSH and HTTPS URL handling
-      expect(true).toBe(true); // Placeholder
-    });
-  });
-
-  describe('checkRepositoryExists', () => {
-    it('should return true for existing repository', async () => {
-      // TODO: Test repository existence check
       mockFs.access.mockResolvedValue(undefined);
-      expect(true).toBe(true); // Placeholder
+      mockFs.readFile.mockResolvedValue(JSON.stringify(mockMetadata));
+      mockLockfile.lock.mockResolvedValue(jest.fn().mockResolvedValue(undefined));
+
+      const result = await repositoryManager.updateRepository(mockLocalPath);
+
+      expect(result.updated).toBe(false);
+      expect(result.previousHash).toBe('abc123');
+      expect(result.currentHash).toBe('abc123');
+      expect(result.changes).toBe(0);
     });
 
-    it('should return false for non-existent repository', async () => {
-      // TODO: Test non-existent repository check
+    it('should handle repository not found', async () => {
       mockFs.access.mockRejectedValue(new Error('ENOENT'));
-      expect(true).toBe(true); // Placeholder
+
+      await expect(repositoryManager.updateRepository(mockLocalPath))
+        .rejects.toThrow(RepositoryException);
     });
   });
 
-  describe('getRepositoryMetadata', () => {
-    it('should read repository metadata', async () => {
-      // TODO: Test metadata reading
+  describe('ensureRepository', () => {
+    it('should clone repository if it does not exist', async () => {
+      const mockGitInstance = {
+        clone: jest.fn().mockResolvedValue(undefined),
+        log: jest.fn().mockResolvedValue({
+          latest: { hash: 'abc123def456' }
+        })
+      };
+      
+      mockSimpleGit.mockReturnValue({
+        clone: mockGitInstance.clone
+      });
+             mockSimpleGit.mockImplementation((path?: string) => {
+         if (path) return mockGitInstance;
+         return { clone: mockGitInstance.clone };
+       });
+
+      mockFs.access.mockRejectedValue(new Error('ENOENT'));
+      mockFs.writeFile.mockResolvedValue(undefined);
+      mockLockfile.lock.mockResolvedValue(jest.fn().mockResolvedValue(undefined));
+
+      const result = await repositoryManager.ensureRepository('https://github.com/test/repo');
+
+      expect(result.exists).toBe(true);
+      expect(mockGitInstance.clone).toHaveBeenCalled();
+    });
+
+    it('should update access time for existing repository', async () => {
       const mockMetadata = {
         url: 'https://github.com/test/repo',
         branch: 'main',
         last_updated: new Date().toISOString(),
-        commit_hash: 'abc123'
+        last_accessed: new Date().toISOString(),
+        commit_hash: 'abc123',
+        clone_method: 'https' as const
       };
 
+      mockFs.access.mockResolvedValue(undefined);
       mockFs.readFile.mockResolvedValue(JSON.stringify(mockMetadata));
-      expect(true).toBe(true); // Placeholder
-    });
+      mockFs.writeFile.mockResolvedValue(undefined);
 
-    it('should handle missing metadata file', async () => {
-      // TODO: Test missing metadata handling
-      mockFs.readFile.mockRejectedValue(new Error('ENOENT'));
-      expect(true).toBe(true); // Placeholder
+      const result = await repositoryManager.ensureRepository('https://github.com/test/repo');
+
+      expect(result.exists).toBe(true);
+      expect(mockFs.writeFile).toHaveBeenCalled(); // For updating access time
     });
   });
 
-  describe('saveRepositoryMetadata', () => {
-    it('should save repository metadata', async () => {
-      // TODO: Test metadata saving
-      const metadata = {
-        url: 'https://github.com/test/repo',
+  describe('getRepositoryStats', () => {
+    it('should return repository statistics', async () => {
+      const mockDirents = [
+        { name: 'repo1', isDirectory: () => true },
+        { name: 'repo2', isDirectory: () => true },
+        { name: 'file.txt', isDirectory: () => false }
+      ];
+
+      const mockMetadata1 = {
+        url: 'https://github.com/test/repo1',
+        branch: 'main',
+        last_updated: '2024-01-01T00:00:00Z',
+        last_accessed: '2024-01-01T00:00:00Z',
+        commit_hash: 'abc123',
+        clone_method: 'https' as const
+      };
+
+      const mockMetadata2 = {
+        url: 'https://github.com/test/repo2',
+        branch: 'main',
+        last_updated: '2024-01-02T00:00:00Z',
+        last_accessed: '2024-01-02T00:00:00Z',
+        commit_hash: 'def456',
+        clone_method: 'https' as const
+      };
+
+      mockFs.readdir.mockResolvedValue(mockDirents);
+      mockFs.stat.mockResolvedValue({ size: 1024 });
+      mockFs.readFile
+        .mockResolvedValueOnce(JSON.stringify(mockMetadata1))
+        .mockResolvedValueOnce(JSON.stringify(mockMetadata2));
+
+      // Mock readdir for calculating directory size  
+      mockFs.readdir.mockImplementation((dir: string, options?: any) => {
+        if (typeof dir === 'string' && (dir.includes('repo1') || dir.includes('repo2'))) {
+          return Promise.resolve([]);
+        }
+        return Promise.resolve(mockDirents);
+      });
+
+      const result = await repositoryManager.getRepositoryStats();
+
+      expect(result.totalRepositories).toBe(2);
+      expect(result.diskUsage).toBeGreaterThanOrEqual(0);
+      expect(result.oldestAccess).toBe('2024-01-01T00:00:00.000Z');
+      expect(result.newestAccess).toBe('2024-01-02T00:00:00.000Z');
+    });
+  });
+
+  describe('cleanupRepositories', () => {
+    it('should clean up old repositories', async () => {
+      const oldDate = new Date();
+      oldDate.setDate(oldDate.getDate() - 10);
+
+      const mockDirents = [
+        { name: 'old_repo', isDirectory: () => true },
+        { name: 'new_repo', isDirectory: () => true }
+      ];
+
+      const oldMetadata = {
+        url: 'https://github.com/test/old-repo',
+        branch: 'main',
+        last_updated: oldDate.toISOString(),
+        last_accessed: oldDate.toISOString(),
+        commit_hash: 'abc123',
+        clone_method: 'https' as const
+      };
+
+      const newMetadata = {
+        url: 'https://github.com/test/new-repo',
         branch: 'main',
         last_updated: new Date().toISOString(),
-        commit_hash: 'abc123'
+        last_accessed: new Date().toISOString(),
+        commit_hash: 'def456',
+        clone_method: 'https' as const
       };
 
-      mockFs.writeFile.mockResolvedValue(undefined);
-      expect(true).toBe(true); // Placeholder
-    });
-  });
+      mockFs.readdir.mockImplementation((dir: string, options?: any) => {
+        if (typeof dir === 'string' && (dir.includes('old_repo') || dir.includes('new_repo'))) {
+          return Promise.resolve([]);
+        }
+        return Promise.resolve(mockDirents);
+      });
+      
+      mockFs.readFile
+        .mockResolvedValueOnce(JSON.stringify(oldMetadata))
+        .mockResolvedValueOnce(JSON.stringify(newMetadata));
+      mockFs.rm.mockResolvedValue(undefined);
 
-  describe('acquireLock', () => {
-    it('should acquire repository lock successfully', async () => {
-      // TODO: Test lock acquisition
-      mockLockfile.lock.mockResolvedValue('lock-release-function');
-      expect(true).toBe(true); // Placeholder
-    });
+      await repositoryManager.cleanupRepositories(7); // 7 days retention
 
-    it('should handle lock timeout', async () => {
-      // TODO: Test lock timeout handling
-      mockLockfile.lock.mockRejectedValue(new Error('Lock timeout'));
-      expect(true).toBe(true); // Placeholder
-    });
-  });
-
-  describe('releaseLock', () => {
-    it('should release repository lock', async () => {
-      // TODO: Test lock release
-      const mockRelease = jest.fn().mockResolvedValue(undefined);
-      mockLockfile.unlock.mockResolvedValue(undefined);
-      expect(true).toBe(true); // Placeholder
-    });
-  });
-
-  describe('cleanup', () => {
-    it('should clean up old repositories', async () => {
-      // TODO: Test repository cleanup
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should respect retention policy', async () => {
-      // TODO: Test retention policy enforcement
-      expect(true).toBe(true); // Placeholder
-    });
-  });
-
-  describe('validateRepository', () => {
-    it('should validate repository URL', () => {
-      // TODO: Test URL validation
-      const validUrls = [
-        'https://github.com/owner/repo',
-        'git@github.com:owner/repo.git',
-        'https://github.com/owner/repo.git'
-      ];
-
-      const invalidUrls = [
-        'not-a-url',
-        'http://example.com',
-        ''
-      ];
-
-      expect(true).toBe(true); // Placeholder
+      expect(mockFs.rm).toHaveBeenCalledWith(
+        expect.stringContaining('old_repo'),
+        { recursive: true, force: true }
+      );
     });
   });
 
   describe('error handling', () => {
-    it('should handle network errors', async () => {
-      // TODO: Test network error handling
-      expect(true).toBe(true); // Placeholder
+    it('should handle invalid repository URLs', async () => {
+      await expect(repositoryManager.getRepositoryInfo(''))
+        .rejects.toThrow(RepositoryException);
+
+      await expect(repositoryManager.getRepositoryInfo('invalid-url'))
+        .rejects.toThrow(RepositoryException);
     });
 
-    it('should handle disk space errors', async () => {
-      // TODO: Test disk space error handling
-      expect(true).toBe(true); // Placeholder
+    it('should handle metadata errors', async () => {
+      mockFs.access.mockResolvedValue(undefined);
+      mockFs.readFile.mockRejectedValue(new Error('Permission denied'));
+
+      const result = await repositoryManager.getRepositoryInfo('https://github.com/test/repo');
+
+      expect(result.metadata).toBeUndefined();
     });
 
-    it('should handle permission errors', async () => {
-      // TODO: Test permission error handling
-      expect(true).toBe(true); // Placeholder
+    it('should handle lock failures', async () => {
+      mockLockfile.lock.mockRejectedValue(new Error('Lock timeout'));
+      mockFs.access.mockRejectedValue(new Error('ENOENT'));
+
+      await expect(repositoryManager.cloneRepository('https://github.com/test/repo'))
+        .rejects.toThrow(RepositoryException);
     });
   });
 }); 

@@ -33,7 +33,7 @@ module.exports = {
   moduleFileExtensions: ['ts', 'js', 'json'],
   
   // Module path mapping (consistent with tsconfig.json)
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@config/(.*)$': '<rootDir>/src/config/$1',
     '^@services/(.*)$': '<rootDir>/src/services/$1',

@@ -3,8 +3,9 @@
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
+    "types": ["node", "jest"],
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -24,13 +25,12 @@
     "emitDecoratorMetadata": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "tests/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "**/*.spec.ts"
+    "dist"
   ],
   "ts-node": {
     "esm": false

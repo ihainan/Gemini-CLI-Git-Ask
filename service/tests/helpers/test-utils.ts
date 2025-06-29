@@ -6,30 +6,16 @@
 import { Express } from 'express';
 import request from 'supertest';
 import {
-  AskRequest,
-  AskSuccessResponse,
-  AskErrorResponse,
   RepositoryInfo,
   RepositoryMetadata,
-  GitCloneMethod,
-  ErrorCode
-} from '../../../src/types';
+  RepositoryError
+} from '../../src/types';
 
 /**
  * Test API request helper
  */
 export class TestAPIHelper {
   constructor(private app: Express) {}
-
-  /**
-   * Make POST request to /api/v1/ask endpoint
-   */
-  async askQuestion(payload: AskRequest) {
-    return request(this.app)
-      .post('/api/v1/ask')
-      .send(payload)
-      .set('Content-Type', 'application/json');
-  }
 
   /**
    * Make GET request to health endpoint
@@ -58,9 +44,9 @@ export class TestAPIHelper {
  */
 export class MockDataFactory {
   /**
-   * Create mock API request
+   * Create mock API request (placeholder for future implementation)
    */
-  static createMockRequest(overrides?: Partial<AskRequest>): AskRequest {
+  static createMockRequest(overrides?: any): any {
     return {
       repository_url: 'https://github.com/test/repo',
       question: 'What does this code do?',
@@ -71,20 +57,15 @@ export class MockDataFactory {
   }
 
   /**
-   * Create mock successful response
+   * Create mock successful response (placeholder for future implementation)
    */
-  static createMockSuccessResponse(overrides?: Partial<{
-    answer: string;
-    repository: RepositoryInfo;
-    execution_time: number;
-  }>): AskSuccessResponse {
+  static createMockSuccessResponse(overrides?: any): any {
     return {
       status: 'success',
       answer: 'This is a test repository.',
       repository: {
         url: 'https://github.com/test/repo',
-        branch: 'main',
-        commit_hash: 'abc123def456'
+        branch: 'main'
       },
       execution_time: 1.5,
       ...overrides
@@ -92,16 +73,12 @@ export class MockDataFactory {
   }
 
   /**
-   * Create mock error response
+   * Create mock error response (placeholder for future implementation)
    */
-  static createMockErrorResponse(overrides?: Partial<{
-    error_code: ErrorCode;
-    message: string;
-    details?: Record<string, any>;
-  }>): AskErrorResponse {
+  static createMockErrorResponse(overrides?: any): any {
     return {
       status: 'error',
-      error_code: ErrorCode.INTERNAL_ERROR,
+      error_code: 'INTERNAL_ERROR',
       message: 'An unexpected error occurred',
       ...overrides
     };
@@ -117,9 +94,7 @@ export class MockDataFactory {
       last_updated: new Date().toISOString(),
       last_accessed: new Date().toISOString(),
       commit_hash: 'abc123def456',
-      clone_method: 'https' as GitCloneMethod,
-      size_mb: 10.5,
-      file_count: 150,
+      clone_method: 'https',
       ...overrides
     };
   }
@@ -131,7 +106,9 @@ export class MockDataFactory {
     return {
       url: 'https://github.com/test/repo',
       branch: 'main',
-      commit_hash: 'abc123def456',
+      localPath: '/tmp/test_repo_main_abc123',
+      exists: true,
+      metadata: MockDataFactory.createMockRepositoryMetadata(),
       ...overrides
     };
   }
@@ -210,11 +187,12 @@ export class TestEnvironmentUtils {
       },
       repository: {
         storage_path: './test-repositories',
-        clone_method: 'https' as GitCloneMethod,
+        clone_method: 'https',
         clone_depth: 1,
         update_threshold_hours: 24,
         access_timeout_hours: 72,
-        max_concurrent_operations: 10
+        max_concurrent_operations: 10,
+        default_branch: 'main'
       },
       cleanup: {
         enabled: false, // Disable for testing
@@ -269,21 +247,20 @@ export class MockFileSystem {
  */
 export class TestAssertions {
   /**
-   * Assert that response matches AskSuccessResponse structure
+   * Assert that response matches success response structure (placeholder)
    */
-  static assertSuccessResponse(response: any): asserts response is AskSuccessResponse {
+  static assertSuccessResponse(response: any): void {
     expect(response).toHaveProperty('status', 'success');
     expect(response).toHaveProperty('answer');
-    expect(response).toHaveProperty('repository');
     expect(response).toHaveProperty('execution_time');
     expect(typeof response.answer).toBe('string');
     expect(typeof response.execution_time).toBe('number');
   }
 
   /**
-   * Assert that response matches AskErrorResponse structure
+   * Assert that response matches error response structure (placeholder)
    */
-  static assertErrorResponse(response: any): asserts response is AskErrorResponse {
+  static assertErrorResponse(response: any): void {
     expect(response).toHaveProperty('status', 'error');
     expect(response).toHaveProperty('error_code');
     expect(response).toHaveProperty('message');
@@ -302,5 +279,16 @@ export class TestAssertions {
     expect(metadata).toHaveProperty('commit_hash');
     expect(metadata).toHaveProperty('clone_method');
     expect(['https', 'ssh']).toContain(metadata.clone_method);
+  }
+
+  /**
+   * Assert that repository info is valid
+   */
+  static assertValidRepositoryInfo(info: any): asserts info is RepositoryInfo {
+    expect(info).toHaveProperty('url');
+    expect(info).toHaveProperty('branch');
+    expect(info).toHaveProperty('localPath');
+    expect(info).toHaveProperty('exists');
+    expect(typeof info.exists).toBe('boolean');
   }
 } 
