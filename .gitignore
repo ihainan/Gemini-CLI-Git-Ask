@@ -1,0 +1,64 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Service directories
+service/node_modules/
+service/dist/
+service/build/
+service/logs/
+service/repositories/
+service/repository_locks/
+
+# Configuration files (keep examples)
+service/config.yaml
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Reference repository (exclude gemini-cli source code)
+gemini-cli/
+
+# Documentation and design files are kept
+# chat_history/ - keep
+# mcp/ - keep
+
+# Test coverage
+coverage/
+*.lcov
+
+# TypeScript
+*.tsbuildinfo
+
+# ESLint cache
+.eslintcache
+
+# Prettier cache
+.prettiercache 
