@@ -5,6 +5,15 @@
 
 import { Express } from 'express';
 import request from 'supertest';
+import {
+  AskRequest,
+  AskSuccessResponse,
+  AskErrorResponse,
+  RepositoryInfo,
+  RepositoryMetadata,
+  GitCloneMethod,
+  ErrorCode
+} from '../../../src/types';
 
 /**
  * Test API request helper
@@ -15,12 +24,7 @@ export class TestAPIHelper {
   /**
    * Make POST request to /api/v1/ask endpoint
    */
-  async askQuestion(payload: {
-    repository_url: string;
-    question: string;
-    branch?: string;
-    timeout?: number;
-  }) {
+  async askQuestion(payload: AskRequest) {
     return request(this.app)
       .post('/api/v1/ask')
       .send(payload)
@@ -40,21 +44,23 @@ export class TestAPIHelper {
   async checkReady() {
     return request(this.app).get('/ready');
   }
+
+  /**
+   * Make GET request to metrics endpoint
+   */
+  async getMetrics() {
+    return request(this.app).get('/metrics');
+  }
 }
 
 /**
- * Mock data factory
+ * Mock data factory with type safety
  */
 export class MockDataFactory {
   /**
-   * Create mock repository request
+   * Create mock API request
    */
-  static createMockRequest(overrides?: Partial<{
-    repository_url: string;
-    question: string;
-    branch: string;
-    timeout: number;
-  }>) {
+  static createMockRequest(overrides?: Partial<AskRequest>): AskRequest {
     return {
       repository_url: 'https://github.com/test/repo',
       question: 'What does this code do?',
@@ -65,17 +71,13 @@ export class MockDataFactory {
   }
 
   /**
-   * Create mock success response
+   * Create mock successful response
    */
   static createMockSuccessResponse(overrides?: Partial<{
     answer: string;
-    repository: {
-      url: string;
-      branch: string;
-      commit_hash: string;
-    };
+    repository: RepositoryInfo;
     execution_time: number;
-  }>) {
+  }>): AskSuccessResponse {
     return {
       status: 'success',
       answer: 'This is a test repository.',
@@ -93,14 +95,43 @@ export class MockDataFactory {
    * Create mock error response
    */
   static createMockErrorResponse(overrides?: Partial<{
-    error_code: string;
+    error_code: ErrorCode;
     message: string;
-    details?: any;
-  }>) {
+    details?: Record<string, any>;
+  }>): AskErrorResponse {
     return {
       status: 'error',
-      error_code: 'INTERNAL_ERROR',
+      error_code: ErrorCode.INTERNAL_ERROR,
       message: 'An unexpected error occurred',
+      ...overrides
+    };
+  }
+
+  /**
+   * Create mock repository metadata
+   */
+  static createMockRepositoryMetadata(overrides?: Partial<RepositoryMetadata>): RepositoryMetadata {
+    return {
+      url: 'https://github.com/test/repo',
+      branch: 'main',
+      last_updated: new Date().toISOString(),
+      last_accessed: new Date().toISOString(),
+      commit_hash: 'abc123def456',
+      clone_method: 'https' as GitCloneMethod,
+      size_mb: 10.5,
+      file_count: 150,
+      ...overrides
+    };
+  }
+
+  /**
+   * Create mock repository info
+   */
+  static createMockRepositoryInfo(overrides?: Partial<RepositoryInfo>): RepositoryInfo {
+    return {
+      url: 'https://github.com/test/repo',
+      branch: 'main',
+      commit_hash: 'abc123def456',
       ...overrides
     };
   }
@@ -150,6 +181,55 @@ export class TestEnvironmentUtils {
     }
     throw new Error(`Condition not met within ${timeout}ms`);
   }
+
+  /**
+   * Generate unique test ID
+   */
+  static generateTestId(): string {
+    return `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * Create mock configuration for testing
+   */
+  static createMockConfig() {
+    return {
+      server: {
+        host: 'localhost',
+        port: 8080,
+        max_concurrent_requests: 100
+      },
+      gemini: {
+        model: 'gemini-1.5-flash-latest',
+        temperature: 0.7,
+        top_p: 0.9,
+        top_k: 40,
+        max_output_tokens: 4096,
+        api_timeout: 300,
+        base_prompt: 'You are a helpful assistant'
+      },
+      repository: {
+        storage_path: './test-repositories',
+        clone_method: 'https' as GitCloneMethod,
+        clone_depth: 1,
+        update_threshold_hours: 24,
+        access_timeout_hours: 72,
+        max_concurrent_operations: 10
+      },
+      cleanup: {
+        enabled: false, // Disable for testing
+        interval_hours: 24,
+        retention_days: 7,
+        max_storage_gb: 50
+      },
+      logging: {
+        level: 'error' as const, // Reduce noise during testing
+        file: './test-logs/service.log',
+        max_size_mb: 100,
+        backup_count: 5
+      }
+    };
+  }
 }
 
 /**
@@ -172,5 +252,55 @@ export class MockFileSystem {
 
   static hasMockFile(path: string): boolean {
     return this.mockFiles.has(path);
+  }
+
+  static mockJsonFile(path: string, data: any): void {
+    this.mockFiles.set(path, JSON.stringify(data, null, 2));
+  }
+
+  static getMockJsonFile<T>(path: string): T | undefined {
+    const content = this.mockFiles.get(path);
+    return content ? JSON.parse(content) : undefined;
+  }
+}
+
+/**
+ * Test assertion helpers
+ */
+export class TestAssertions {
+  /**
+   * Assert that response matches AskSuccessResponse structure
+   */
+  static assertSuccessResponse(response: any): asserts response is AskSuccessResponse {
+    expect(response).toHaveProperty('status', 'success');
+    expect(response).toHaveProperty('answer');
+    expect(response).toHaveProperty('repository');
+    expect(response).toHaveProperty('execution_time');
+    expect(typeof response.answer).toBe('string');
+    expect(typeof response.execution_time).toBe('number');
+  }
+
+  /**
+   * Assert that response matches AskErrorResponse structure
+   */
+  static assertErrorResponse(response: any): asserts response is AskErrorResponse {
+    expect(response).toHaveProperty('status', 'error');
+    expect(response).toHaveProperty('error_code');
+    expect(response).toHaveProperty('message');
+    expect(typeof response.error_code).toBe('string');
+    expect(typeof response.message).toBe('string');
+  }
+
+  /**
+   * Assert that repository metadata is valid
+   */
+  static assertValidRepositoryMetadata(metadata: any): asserts metadata is RepositoryMetadata {
+    expect(metadata).toHaveProperty('url');
+    expect(metadata).toHaveProperty('branch');
+    expect(metadata).toHaveProperty('last_updated');
+    expect(metadata).toHaveProperty('last_accessed');
+    expect(metadata).toHaveProperty('commit_hash');
+    expect(metadata).toHaveProperty('clone_method');
+    expect(['https', 'ssh']).toContain(metadata.clone_method);
   }
 } 

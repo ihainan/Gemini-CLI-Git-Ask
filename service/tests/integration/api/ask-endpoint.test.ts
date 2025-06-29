@@ -4,6 +4,7 @@
 
 import request from 'supertest';
 import { MockDataFactory, TestAPIHelper } from '../../helpers/test-utils';
+import { ErrorCode } from '../../../../src/types';
 
 // Mock dependencies
 // jest.mock('../../../src/services/repository-manager'); // TODO: Uncomment when implemented
@@ -95,7 +96,7 @@ describe('POST /api/v1/ask', () => {
       };
 
       const expectedError = MockDataFactory.createMockErrorResponse({
-        error_code: 'INVALID_REQUEST',
+        error_code: ErrorCode.INVALID_REQUEST,
         message: 'repository_url is required'
       });
 
@@ -162,7 +163,7 @@ describe('POST /api/v1/ask', () => {
       });
 
       const expectedError = MockDataFactory.createMockErrorResponse({
-        error_code: 'REPOSITORY_NOT_FOUND',
+        error_code: ErrorCode.REPOSITORY_NOT_FOUND,
         message: 'Repository not found or not accessible'
       });
 
@@ -177,7 +178,7 @@ describe('POST /api/v1/ask', () => {
       });
 
       const expectedError = MockDataFactory.createMockErrorResponse({
-        error_code: 'REPOSITORY_CLONE_FAILED',
+        error_code: ErrorCode.REPOSITORY_CLONE_FAILED,
         message: 'Failed to clone repository'
       });
 
@@ -194,7 +195,7 @@ describe('POST /api/v1/ask', () => {
       });
 
       const expectedError = MockDataFactory.createMockErrorResponse({
-        error_code: 'GEMINI_EXECUTION_FAILED',
+        error_code: ErrorCode.GEMINI_EXECUTION_FAILED,
         message: 'Failed to execute Gemini CLI'
       });
 
@@ -210,7 +211,7 @@ describe('POST /api/v1/ask', () => {
       });
 
       const expectedError = MockDataFactory.createMockErrorResponse({
-        error_code: 'TIMEOUT_EXCEEDED',
+        error_code: ErrorCode.TIMEOUT_EXCEEDED,
         message: 'Operation exceeded configured timeout'
       });
 
@@ -244,7 +245,7 @@ describe('POST /api/v1/ask', () => {
       });
 
       const expectedError = MockDataFactory.createMockErrorResponse({
-        error_code: 'LOCK_TIMEOUT',
+        error_code: ErrorCode.LOCK_TIMEOUT,
         message: 'Failed to acquire repository lock'
       });
 

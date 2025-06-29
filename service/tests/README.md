@@ -106,15 +106,36 @@ describe('POST /api/v1/ask', () => {
 });
 ```
 
+### Type Definition Tests
+Type definition tests ensure type safety and validate enum values:
+
+- **Purpose**: Verify TypeScript interfaces and enums are correctly defined
+- **Scope**: Type definitions, mock factories, and test utilities
+- **Location**: `tests/unit/types/`
+- **Focus**: Enum values, type assertions, mock data factory validation
+
+**Example:**
+```typescript
+describe('Type Definitions', () => {
+  describe('ErrorCode', () => {
+    it('should have all required error codes', () => {
+      expect(ErrorCode.INVALID_REQUEST).toBe('INVALID_REQUEST');
+      expect(ErrorCode.REPOSITORY_NOT_FOUND).toBe('REPOSITORY_NOT_FOUND');
+    });
+  });
+});
+```
+
 ## 🔧 Testing Tools and Utilities
 
 ### MockDataFactory
-Factory class for creating consistent test data:
+Factory class for creating consistent test data with full type safety:
 
 ```typescript
 import { MockDataFactory } from '../helpers/test-utils';
+import { ErrorCode, GitCloneMethod } from '../../src/types';
 
-// Create mock API request
+// Create mock API request (now fully typed)
 const mockRequest = MockDataFactory.createMockRequest({
   repository_url: 'https://github.com/test/repo',
   question: 'What does this code do?'
@@ -125,25 +146,64 @@ const mockResponse = MockDataFactory.createMockSuccessResponse({
   answer: 'This is a test repository.'
 });
 
-// Create mock error response
+// Create mock error response with typed error codes
 const mockError = MockDataFactory.createMockErrorResponse({
-  error_code: 'REPOSITORY_NOT_FOUND',
+  error_code: ErrorCode.REPOSITORY_NOT_FOUND,
   message: 'Repository not found'
+});
+
+// Create mock repository metadata
+const mockMetadata = MockDataFactory.createMockRepositoryMetadata({
+  url: 'https://github.com/test/repo',
+  clone_method: 'ssh' as GitCloneMethod,
+  size_mb: 25.7
+});
+
+// Create mock repository info
+const mockRepoInfo = MockDataFactory.createMockRepositoryInfo({
+  url: 'https://github.com/test/repo',
+  branch: 'develop'
 });
 ```
 
 ### TestAPIHelper
-Helper class for API endpoint testing:
+Helper class for API endpoint testing with full type safety:
 
 ```typescript
 import { TestAPIHelper } from '../helpers/test-utils';
+import { AskRequest } from '../../src/types';
 
 const apiHelper = new TestAPIHelper(app);
 
-// Test API endpoints
+// Test API endpoints (now with typed requests)
+const mockRequest: AskRequest = MockDataFactory.createMockRequest();
 const response = await apiHelper.askQuestion(mockRequest);
 const healthCheck = await apiHelper.checkHealth();
 const readinessCheck = await apiHelper.checkReady();
+const metrics = await apiHelper.getMetrics(); // New method
+```
+
+### TestAssertions
+Helper class for type-safe response validation:
+
+```typescript
+import { TestAssertions } from '../helpers/test-utils';
+
+// Assert response structure and types
+TestAssertions.assertSuccessResponse(response.body);
+TestAssertions.assertErrorResponse(errorResponse.body);
+TestAssertions.assertValidRepositoryMetadata(metadata);
+
+// Example usage in tests
+it('should return valid success response', async () => {
+  const response = await apiHelper.askQuestion(mockRequest);
+  
+  // This will throw if response doesn't match AskSuccessResponse structure
+  TestAssertions.assertSuccessResponse(response.body);
+  
+  // Now TypeScript knows response.body is AskSuccessResponse
+  expect(response.body.execution_time).toBeGreaterThan(0);
+});
 ```
 
 ### TestEnvironmentUtils
@@ -479,10 +539,11 @@ npm test -- --detectOpenHandles --forceExit
 - [x] npm test scripts for different scenarios
 
 #### Testing Utilities ✅
-- [x] `MockDataFactory` for consistent test data generation
-- [x] `TestAPIHelper` for API endpoint testing
+- [x] `MockDataFactory` for consistent test data generation with full type safety
+- [x] `TestAPIHelper` for API endpoint testing with typed requests
 - [x] `TestEnvironmentUtils` for environment management
 - [x] `MockFileSystem` for file system operations mocking
+- [x] `TestAssertions` for type-safe response validation
 - [x] Mock implementations for external dependencies
 
 #### Mock System ✅
@@ -502,6 +563,11 @@ npm test -- --detectOpenHandles --forceExit
   - [x] Log level configuration
   - [x] File and console output testing
   - [x] Error handling and formatting
+- [x] **Type Definitions** - Complete test suite (20+ test cases)
+  - [x] Enum value validation for all error codes and categories
+  - [x] Mock data factory type safety verification
+  - [x] Test assertion utility validation
+  - [x] Type structure compliance testing
 
 #### Test Coverage ✅
 - [x] Achieved 97.67% statement coverage
@@ -616,8 +682,8 @@ npm test -- --detectOpenHandles --forceExit
 ### Testing Metrics Goals 🎯
 
 #### Current Status
-- **Total Test Suites**: 6 passed
-- **Total Tests**: 104 (12 implemented, 92 skeletons)
+- **Total Test Suites**: 7 passed (including new Type Definition tests)
+- **Total Tests**: 125+ (32+ implemented, 90+ skeletons)
 - **Statement Coverage**: 97.67%
 - **Branch Coverage**: 88.88%
 - **Function Coverage**: 100%

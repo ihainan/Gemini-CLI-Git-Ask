@@ -1,6 +1,6 @@
 # 20250629 Vibe Coding Prompts
 
-## Design the service module
+## Generate design document for the service module
 
 ``` markdown
 请完整阅读 @250629_init_design.md ，开始进行 service 的架构设计，保存在 @design.md 里面。
@@ -11,10 +11,16 @@
 2. 尽可能少使用 emoji。
 ```
 
-## Initialize the service module
+## Bootstrap Node.js service with TypeScript
 
 ````markdown
-帮我 git commit，格式要求是 Conventional Commits，一些参考例子：
+
+````
+
+## Init commit (and build a Git guideline)
+
+```` markdown
+帮我执行 git commit 操作，格式要求遵循 Conventional Commits，以下是一些参考例子：
 
 ```
 feat(auth): support JSON Web Token authentication
@@ -190,4 +196,83 @@ Apply
 🚧 把92个"空"测试填充为真实测试逻辑
 🚧 调整和完善测试以匹配真实实现
 就像我们已经建好了汽车工厂，制造了所有检测设备，但汽车的发动机、轮子、方向盘还没有造出来。一旦这些核心部件做好了，我们就能立即对它们进行全面的质量检测！
+````
+
+## Implement Type Definitions
+
+```` markdown
+0. 请帮我检查一下 @design.md ，检查下一步我们有哪些工作可以做，你建议优先做哪一个。
+1. 请帮我实现 Type Definitions 部分。
+2. 请检查 @/tests ，结合 @README.md  检查我们是否需要根据我们上面的修改，更新我们的测试以及文档。
+3. 请检查是否需要更新 @design.md
+4. 请 git commit 本地任务的修改内容
+````
+
+LLM Response:
+
+```` markdown
+📊 当前项目状态
+✅ 已完成组件
+基础设施：项目结构、TypeScript配置、ESLint设置
+配置管理：ConfigManager 类，支持 YAML 配置
+日志系统：Winston 日志记录
+服务器基础：Express.js 服务器框架
+健康监控：基本的健康检查端点
+测试框架：完整的 Jest 测试环境（104个测试用例，97.67%覆盖率）
+⏳ 进行中组件
+API Routes：/api/v1/ask 端点（测试框架就绪，实现待完成）
+Repository Manager：Git 操作和缓存逻辑（接口已设计，测试已搭建）
+Gemini CLI Executor：Gemini CLI 集成（接口已设计，测试已搭建）
+🔄 待实现组件
+Lock Manager：基于文件的并发控制
+Cleanup Service：后台仓库维护
+Request Validation：输入验证和错误处理
+Type Definitions：完整的 TypeScript 接口
+🎯 建议的优先级排序
+基于功能依赖关系和业务价值，我建议按以下顺序实施：
+优先级 1：Type Definitions
+原因：所有其他组件都依赖这些类型定义
+定义 API 请求/响应接口
+定义仓库元数据结构
+定义配置类型
+定义错误类型
+优先级 2：Repository Manager
+原因：这是核心业务逻辑，其他组件依赖它
+Git 仓库克隆和更新
+本地缓存管理
+仓库元数据处理
+分支和提交哈希处理
+优先级 3：Gemini CLI Executor
+原因：另一个核心功能，与 Repository Manager 并行开发
+Gemini CLI 命令执行
+结果解析和处理
+超时控制
+错误处理
+优先级 4：API Routes
+原因：对外服务接口，需要前面的组件支撑
+实现 /api/v1/ask 端点
+请求参数验证
+响应格式化
+错误响应处理
+优先级 5：Lock Manager
+原因：生产环境必需的并发控制
+基于文件的读写锁
+超时机制
+死锁预防
+优先级 6：Request Validation & Error Handling
+原因：提升服务稳定性
+输入参数验证
+统一错误处理
+错误代码标准化
+优先级 7：Cleanup Service
+原因：后台维护功能，可以最后实现
+定期清理过期仓库
+磁盘空间管理
+日志轮转
+💡 具体建议
+我建议您优先从 Type Definitions 开始，原因如下：
+基础依赖：所有组件都需要类型定义
+开发效率：有了类型定义，后续开发会更快更安全
+测试支持：现有的测试框架可以立即使用这些类型
+并行开发：类型定义完成后，可以并行开发 Repository Manager 和 Gemini CLI Executor
 ````
