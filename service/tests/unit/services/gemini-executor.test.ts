@@ -1,198 +1,302 @@
 /**
- * Unit tests for GeminiExecutor service
+ * GeminiExecutor Unit Tests
  */
 
-import { MockDataFactory } from '../../helpers/test-utils';
-import { setMockExecResult, clearMockExecResults } from '../../__mocks__/child_process';
+import { GeminiExecutor } from '../../../src/services/gemini-executor';
+import { GeminiExecutorConfig, GeminiError, GeminiException } from '../../../src/types';
+import { 
+  MockDataFactory, 
+  TestAssertions, 
+  TestEnvironmentUtils 
+} from '../../helpers/test-utils';
+
+import * as fs from 'fs/promises';
 
 // Mock child_process
 jest.mock('child_process');
 
-describe('GeminiExecutor', () => {
-  // Note: This is a test skeleton for GeminiExecutor service
-  // The actual implementation doesn't exist yet, so this serves as a template
+// Mock fs/promises
+jest.mock('fs/promises', () => ({
+  stat: jest.fn()
+}));
 
-  let geminiExecutor: any;
+describe('GeminiExecutor', () => {
+  let executor: GeminiExecutor;
+  let mockConfig: GeminiExecutorConfig;
 
   beforeEach(() => {
+    mockConfig = MockDataFactory.createMockGeminiExecutorConfig();
+    executor = new GeminiExecutor(mockConfig);
+  });
+
+  afterEach(() => {
     jest.clearAllMocks();
-    clearMockExecResults();
   });
 
   describe('constructor', () => {
-    it('should create GeminiExecutor instance', () => {
-      // TODO: Implement when GeminiExecutor class is created
-      expect(true).toBe(true); // Placeholder
+    it('should create instance with valid config', () => {
+      expect(executor).toBeInstanceOf(GeminiExecutor);
     });
 
-    it('should initialize with configuration', () => {
-      // TODO: Test configuration initialization
-      expect(true).toBe(true); // Placeholder
-    });
-  });
-
-  describe('executeGeminiCLI', () => {
-    it('should execute gemini CLI successfully', async () => {
-      // TODO: Test Gemini CLI execution
-      const mockQuestion = 'What does this code do?';
-      const mockRepositoryPath = '/tmp/test-repo';
+    it('should use default CLI path if not provided', () => {
+      const configWithoutPath = { ...mockConfig };
+      delete configWithoutPath.cliPath;
       
-      setMockExecResult('gemini-cli ask', {
-        stdout: 'This code implements a simple web server.',
-        stderr: ''
-      });
-
-      // Test implementation will go here
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should handle gemini CLI errors', async () => {
-      // TODO: Test CLI error handling
-      setMockExecResult('gemini-cli ask', {
-        stdout: '',
-        stderr: 'Error: Model not found',
-        error: new Error('CLI execution failed')
-      });
-
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should handle timeout errors', async () => {
-      // TODO: Test timeout handling
-      expect(true).toBe(true); // Placeholder
+      const executorWithoutPath = new GeminiExecutor(configWithoutPath);
+      expect(executorWithoutPath).toBeInstanceOf(GeminiExecutor);
     });
   });
 
-  describe('buildCommand', () => {
-    it('should build correct CLI command', () => {
-      // TODO: Test command building
-      const question = 'Explain this function';
-      const options = {
-        model: 'gemini-1.5-flash',
-        temperature: 0.7,
-        maxTokens: 4096
+  describe('validateRequest', () => {
+    it('should throw error for empty question', async () => {
+      const request = MockDataFactory.createMockGeminiRequest({ 
+        question: '' 
+      });
+
+      await expect(executor.ask(request)).rejects.toThrow(GeminiException);
+      await expect(executor.ask(request)).rejects.toThrow('Question cannot be empty');
+    });
+
+    it('should throw error for missing repository path', async () => {
+      const request = MockDataFactory.createMockGeminiRequest({ 
+        repositoryPath: '' 
+      });
+
+      await expect(executor.ask(request)).rejects.toThrow(GeminiException);
+      await expect(executor.ask(request)).rejects.toThrow('Repository path is required');
+    });
+
+    it('should throw error for non-existent repository path', async () => {
+      const mockStat = jest.mocked(fs.stat);
+      mockStat.mockRejectedValue(new Error('ENOENT: no such file or directory'));
+
+      const request = {
+        repositoryPath: '/nonexistent/path',
+        question: 'What does this code do?'
       };
 
-      // Expected command format
-      expect(true).toBe(true); // Placeholder
+      await expect(executor.ask(request)).rejects.toThrow(GeminiException);
+      await expect(executor.ask(request)).rejects.toThrow('Repository path does not exist');
     });
 
-    it('should escape special characters in question', () => {
-      // TODO: Test command escaping
-      const questionWithSpecialChars = 'What does "function()" do?';
-      expect(true).toBe(true); // Placeholder
-    });
-  });
+    it('should throw error for non-directory repository path', async () => {
+      const mockStat = jest.mocked(fs.stat);
+      mockStat.mockResolvedValue({
+        isDirectory: () => false
+      } as any);
 
-  describe('validateInput', () => {
-    it('should validate question input', () => {
-      // TODO: Test input validation
-      const validQuestions = [
-        'What does this code do?',
-        'Explain the main function',
-        'How does the authentication work?'
-      ];
+      const request = {
+        repositoryPath: '/path/to/file.txt',
+        question: 'What does this code do?'
+      };
 
-      const invalidQuestions = [
-        '',
-        null,
-        undefined,
-        ' '.repeat(10000) // Too long
-      ];
-
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should validate repository path', () => {
-      // TODO: Test repository path validation
-      expect(true).toBe(true); // Placeholder
+      await expect(executor.ask(request)).rejects.toThrow(GeminiException);
+      await expect(executor.ask(request)).rejects.toThrow('Repository path is not a directory');
     });
   });
 
-  describe('parseOutput', () => {
-    it('should parse successful CLI output', () => {
-      // TODO: Test output parsing
-      const mockOutput = 'This is the explanation of the code...';
-      expect(true).toBe(true); // Placeholder
+  describe('buildPrompt', () => {
+    it('should build prompt with base prompt and question', () => {
+      const request = {
+        repositoryPath: '/path/to/repo',
+        question: 'What does this code do?'
+      };
+
+      // Access private method for testing
+      const buildPrompt = (executor as any).buildPrompt.bind(executor);
+      const prompt = buildPrompt(request);
+
+      expect(prompt).toContain(mockConfig.basePrompt);
+      expect(prompt).toContain('What does this code do?');
     });
 
-    it('should handle empty output', () => {
-      // TODO: Test empty output handling
-      expect(true).toBe(true); // Placeholder
-    });
+    it('should include additional context when provided', () => {
+      const request = {
+        repositoryPath: '/path/to/repo',
+        question: 'What does this code do?',
+        context: 'This is a React application'
+      };
 
-    it('should handle malformed output', () => {
-      // TODO: Test malformed output handling
-      expect(true).toBe(true); // Placeholder
-    });
-  });
+      const buildPrompt = (executor as any).buildPrompt.bind(executor);
+      const prompt = buildPrompt(request);
 
-  describe('checkGeminiCLIAvailability', () => {
-    it('should verify Gemini CLI is available', async () => {
-      // TODO: Test CLI availability check
-      setMockExecResult('gemini-cli --version', {
-        stdout: 'gemini-cli version 1.0.0',
-        stderr: ''
-      });
-
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should handle missing Gemini CLI', async () => {
-      // TODO: Test missing CLI handling
-      setMockExecResult('gemini-cli --version', {
-        stdout: '',
-        stderr: 'command not found',
-        error: new Error('Command not found')
-      });
-
-      expect(true).toBe(true); // Placeholder
-    });
-  });
-
-  describe('performance monitoring', () => {
-    it('should track execution time', async () => {
-      // TODO: Test execution time tracking
-      expect(true).toBe(true); // Placeholder
-    });
-
-    it('should track memory usage', async () => {
-      // TODO: Test memory usage tracking
-      expect(true).toBe(true); // Placeholder
+      expect(prompt).toContain('This is a React application');
     });
   });
 
   describe('error handling', () => {
-    it('should handle process termination', async () => {
-      // TODO: Test process termination handling
-      expect(true).toBe(true); // Placeholder
+    it('should create proper GeminiException with error details', () => {
+      const exception = new GeminiException(
+        GeminiError.EXECUTION_FAILED,
+        'Test error message',
+        { detail: 'test' },
+        'stderr output'
+      );
+
+      expect(exception.code).toBe(GeminiError.EXECUTION_FAILED);
+      expect(exception.message).toBe('Test error message');
+      expect(exception.details).toEqual({ detail: 'test' });
+      expect(exception.stderr).toBe('stderr output');
+      expect(exception.name).toBe('GeminiException');
     });
 
-    it('should handle API rate limits', async () => {
-      // TODO: Test rate limit handling
-      expect(true).toBe(true); // Placeholder
-    });
+    it('should handle different error types correctly', () => {
+      const errorTypes = [
+        GeminiError.EXECUTION_FAILED,
+        GeminiError.TIMEOUT_EXCEEDED,
+        GeminiError.INVALID_RESPONSE,
+        GeminiError.CLI_NOT_FOUND,
+        GeminiError.INVALID_REQUEST,
+        GeminiError.API_ERROR,
+        GeminiError.INTERNAL_ERROR
+      ];
 
-    it('should handle network errors', async () => {
-      // TODO: Test network error handling
-      expect(true).toBe(true); // Placeholder
+      errorTypes.forEach(errorType => {
+        const exception = new GeminiException(errorType, 'Test message');
+        expect(exception.code).toBe(errorType);
+      });
     });
   });
 
-  describe('configuration', () => {
-    it('should use configured model', () => {
-      // TODO: Test model configuration
-      expect(true).toBe(true); // Placeholder
+  describe('parseGeminiResponse', () => {
+    it('should parse successful response correctly', () => {
+      const mockResult = {
+        stdout: 'This is the answer from Gemini CLI',
+        stderr: '',
+        exitCode: 0,
+        executionTime: 1000
+      };
+
+      const parseResponse = (executor as any).parseGeminiResponse.bind(executor);
+      const response = parseResponse(mockResult, Date.now() - 1000);
+
+      expect(response.answer).toBe('This is the answer from Gemini CLI');
+      expect(response.model).toBe(mockConfig.model);
+      expect(response.execution_time).toBeGreaterThan(0);
     });
 
-    it('should use configured temperature', () => {
-      // TODO: Test temperature configuration
-      expect(true).toBe(true); // Placeholder
+    it('should parse JSON response correctly', () => {
+      const mockResult = {
+        stdout: '{"answer": "JSON response", "tokens_used": 100}',
+        stderr: '',
+        exitCode: 0,
+        executionTime: 1000
+      };
+
+      const parseResponse = (executor as any).parseGeminiResponse.bind(executor);
+      const response = parseResponse(mockResult, Date.now() - 1000);
+
+      expect(response.answer).toBe('JSON response');
+      expect(response.tokens_used).toBe(100);
     });
 
-    it('should use configured timeout', () => {
-      // TODO: Test timeout configuration
-      expect(true).toBe(true); // Placeholder
+    it('should throw error for non-zero exit code', () => {
+      const mockResult = {
+        stdout: '',
+        stderr: 'Error message',
+        exitCode: 1,
+        executionTime: 1000
+      };
+
+      const parseResponse = (executor as any).parseGeminiResponse.bind(executor);
+      
+      expect(() => parseResponse(mockResult, Date.now() - 1000))
+        .toThrow(GeminiException);
+    });
+
+    it('should throw error for empty response', () => {
+      const mockResult = {
+        stdout: '',
+        stderr: '',
+        exitCode: 0,
+        executionTime: 1000
+      };
+
+      const parseResponse = (executor as any).parseGeminiResponse.bind(executor);
+      
+      expect(() => parseResponse(mockResult, Date.now() - 1000))
+        .toThrow('Gemini CLI returned empty response');
+    });
+  });
+
+  describe('integration with test utilities', () => {
+    it('should work with mock data factory', () => {
+      const request = MockDataFactory.createMockGeminiRequest();
+      const response = MockDataFactory.createMockGeminiResponse();
+      const config = MockDataFactory.createMockGeminiExecutorConfig();
+
+      // Validate using test assertions
+      TestAssertions.assertValidGeminiRequest(request);
+      TestAssertions.assertValidGeminiResponse(response);
+
+      expect(request.question).toBeTruthy();
+      expect(response.answer).toBeTruthy();
+      expect(config.model).toBeTruthy();
+    });
+
+    it('should validate Gemini exceptions properly', () => {
+      const exception = new GeminiException(
+        GeminiError.EXECUTION_FAILED,
+        'Test execution failed'
+      );
+
+      TestAssertions.assertValidGeminiException(exception);
+      expect(exception.code).toBe(GeminiError.EXECUTION_FAILED);
+    });
+
+    it('should use mock exec results for CLI commands', async () => {
+      // Mock the executeCommand method directly
+      const mockExecuteCommand = jest.spyOn(executor as any, 'executeCommand');
+      mockExecuteCommand.mockResolvedValue({
+        stdout: 'gemini-cli version 2.0.0',
+        stderr: '',
+        exitCode: 0,
+        executionTime: 100
+      });
+
+      const version = await executor.getVersion();
+      expect(version).toBe('gemini-cli version 2.0.0');
+      
+      mockExecuteCommand.mockRestore();
+    });
+
+    it('should handle mock error scenarios', async () => {
+      // Mock the executeCommand method to throw an error
+      const mockExecuteCommand = jest.spyOn(executor as any, 'executeCommand');
+      mockExecuteCommand.mockRejectedValue(new Error('ENOENT'));
+
+      await expect(executor.getVersion()).rejects.toThrow(GeminiException);
+      
+      mockExecuteCommand.mockRestore();
+    });
+  });
+
+  describe('checkAvailability', () => {
+    it('should return true when CLI is available', async () => {
+      // Mock the executeCommand method directly
+      const mockExecuteCommand = jest.spyOn(executor as any, 'executeCommand');
+      mockExecuteCommand.mockResolvedValue({
+        stdout: 'gemini-cli version 1.0.0',
+        stderr: '',
+        exitCode: 0,
+        executionTime: 100
+      });
+
+      const isAvailable = await executor.checkAvailability();
+      expect(isAvailable).toBe(true);
+      
+      mockExecuteCommand.mockRestore();
+    });
+
+    it('should return false when CLI is not available', async () => {
+      // Mock the executeCommand method to throw an error
+      const mockExecuteCommand = jest.spyOn(executor as any, 'executeCommand');
+      mockExecuteCommand.mockRejectedValue(new Error('ENOENT'));
+
+      const isAvailable = await executor.checkAvailability();
+      expect(isAvailable).toBe(false);
+      
+      mockExecuteCommand.mockRestore();
     });
   });
 }); 

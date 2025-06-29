@@ -209,7 +209,7 @@ Apply
 1. 请帮我实现 Type Definitions 部分。
 2. 请检查 @/tests ，结合 @README.md  检查我们是否需要根据我们上面的修改，更新我们的测试以及文档。
 3. 请检查是否需要更新 @design.md
-4. 请 git commit 本地任务的修改内容
+4. 请 git commit 本次任务的修改内容
 ````
 
 ### LLM Key Responses
@@ -287,8 +287,9 @@ Gemini CLI 命令执行
 0. 请帮我检查一下 @design.md ，检查下一步我们有哪些工作可以做，你建议优先做哪一个。
 1. 请帮我实现 Repository Management 部分。
 2. 请检查 @/tests ，结合 @README.md  检查我们是否需要根据我们上面的修改，更新我们的测试以及文档。
-3. 请检查是否需要更新 @design.md
-4. 请 git commit 本地任务的修改内容
+3. 请检查 @/tests，是否已经覆盖了我们本次任务增加/修改的代码。
+4. 请检查是否需要更新 @design.md
+5. 请 git commit 本次任务的修改内容
 ````
 
 ### LLM Key Responses
@@ -296,4 +297,19 @@ Gemini CLI 命令执行
 ```` markdown
 我发现 test-utils.ts 文件中有很多我们目前类型系统中不存在的类型引用。这是因为这个文件是为完整的 API 系统设计的，但我们目前只实现了 Repository Manager 部分。
 让我重构这个文件，暂时移除那些还不存在的 API 类型，专注于已实现的 Repository 相关功能：
+````
+
+
+## Implement Gemini CLI Executor
+
+```` markdown
+0. 请帮我检查一下 @design.md ，检查下一步我们有哪些工作可以做，你建议优先做哪一个。
+1. 请帮我实现 Gemini CLI Executor 部分。
+2. 请检查 @/tests ，结合 @README.md  检查我们是否需要根据我们上面的修改，更新我们的测试以及文档。
+3. 请检查 @/tests，是否已经覆盖了我们本次任务增加/修改的代码。
+4. GeminiExecutor 为什么会有 compilation issue？能否解决然后实现对应的测试？
+5. 被你删除的 Gemini Mock 代码是不需要的吗，为什么？
+6. @/tests 下面有很多测试因为刚才的 compilation issue 没有实现或者注释掉了，请修复。
+7. 请检查是否需要更新 @README.me 和 @design.md
+8. 请 git commit 本次任务的修改内容
 ````

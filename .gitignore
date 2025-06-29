@@ -56,6 +56,9 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
+src/**/*.js
+src/**/*.d.ts
+src/**/*.js.map
 
 # ESLint cache
 .eslintcache

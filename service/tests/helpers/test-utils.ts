@@ -8,7 +8,12 @@ import request from 'supertest';
 import {
   RepositoryInfo,
   RepositoryMetadata,
-  RepositoryError
+  RepositoryError,
+  GeminiRequest,
+  GeminiResponse,
+  GeminiExecutorConfig,
+  GeminiError,
+  GeminiException
 } from '../../src/types';
 
 /**
@@ -109,6 +114,50 @@ export class MockDataFactory {
       localPath: '/tmp/test_repo_main_abc123',
       exists: true,
       metadata: MockDataFactory.createMockRepositoryMetadata(),
+      ...overrides
+    };
+  }
+
+  /**
+   * Create mock Gemini request
+   */
+  static createMockGeminiRequest(overrides?: Partial<GeminiRequest>): GeminiRequest {
+    return {
+      repositoryPath: '/tmp/test_repo_main_abc123',
+      question: 'What does this code do?',
+      context: 'This is a test repository',
+      timeout: 300000,
+      ...overrides
+    };
+  }
+
+  /**
+   * Create mock Gemini response
+   */
+  static createMockGeminiResponse(overrides?: Partial<GeminiResponse>): GeminiResponse {
+    return {
+      answer: 'This is a test repository that demonstrates basic functionality.',
+      model: 'gemini-2.5-flash',
+      execution_time: 1500,
+      tokens_used: 100,
+      ...overrides
+    };
+  }
+
+  /**
+   * Create mock Gemini executor config
+   */
+  static createMockGeminiExecutorConfig(overrides?: Partial<GeminiExecutorConfig>): GeminiExecutorConfig {
+    return {
+      model: 'gemini-2.5-flash',
+      temperature: 0.7,
+      topP: 0.9,
+      topK: 40,
+      maxOutputTokens: 4096,
+      apiTimeout: 300,
+      basePrompt: 'You are a code analysis assistant.',
+      cliPath: 'gemini-cli',
+      maxBuffer: 1024 * 1024 * 10,
       ...overrides
     };
   }
@@ -290,5 +339,56 @@ export class TestAssertions {
     expect(info).toHaveProperty('localPath');
     expect(info).toHaveProperty('exists');
     expect(typeof info.exists).toBe('boolean');
+  }
+
+  /**
+   * Assert that Gemini request is valid
+   */
+  static assertValidGeminiRequest(request: any): asserts request is GeminiRequest {
+    expect(request).toHaveProperty('repositoryPath');
+    expect(request).toHaveProperty('question');
+    expect(typeof request.repositoryPath).toBe('string');
+    expect(typeof request.question).toBe('string');
+    expect(request.repositoryPath.length).toBeGreaterThan(0);
+    expect(request.question.length).toBeGreaterThan(0);
+    
+    if (request.context !== undefined) {
+      expect(typeof request.context).toBe('string');
+    }
+    if (request.timeout !== undefined) {
+      expect(typeof request.timeout).toBe('number');
+      expect(request.timeout).toBeGreaterThan(0);
+    }
+  }
+
+  /**
+   * Assert that Gemini response is valid
+   */
+  static assertValidGeminiResponse(response: any): asserts response is GeminiResponse {
+    expect(response).toHaveProperty('answer');
+    expect(response).toHaveProperty('model');
+    expect(response).toHaveProperty('execution_time');
+    expect(typeof response.answer).toBe('string');
+    expect(typeof response.model).toBe('string');
+    expect(typeof response.execution_time).toBe('number');
+    expect(response.answer.length).toBeGreaterThan(0);
+    expect(response.execution_time).toBeGreaterThan(0);
+    
+    if (response.tokens_used !== undefined) {
+      expect(typeof response.tokens_used).toBe('number');
+      expect(response.tokens_used).toBeGreaterThan(0);
+    }
+  }
+
+  /**
+   * Assert that Gemini exception is properly formed
+   */
+  static assertValidGeminiException(exception: any): asserts exception is GeminiException {
+    expect(exception).toBeInstanceOf(GeminiException);
+    expect(exception).toHaveProperty('code');
+    expect(exception).toHaveProperty('message');
+    expect(exception).toHaveProperty('name', 'GeminiException');
+    expect(Object.values(GeminiError)).toContain(exception.code);
+    expect(typeof exception.message).toBe('string');
   }
 } 

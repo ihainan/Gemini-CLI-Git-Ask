@@ -13,6 +13,7 @@ export interface MockChildProcess extends EventEmitter {
   };
   kill: jest.Mock;
   pid: number;
+  killed: boolean;
 }
 
 export interface MockExecResult {
@@ -28,8 +29,12 @@ class MockChildProcessEmitter extends EventEmitter implements MockChildProcess {
     write: jest.fn(),
     end: jest.fn()
   };
-  kill = jest.fn();
-  pid = Math.floor(Math.random() * 10000);
+  kill = jest.fn().mockImplementation((signal?: string) => {
+    this.killed = true;
+    return true;
+  });
+  pid = Math.floor(Math.random() * 10000) + 1000; // Ensure it's not 0
+  killed = false;
 
   constructor(private result: MockExecResult) {
     super();
@@ -38,11 +43,11 @@ class MockChildProcessEmitter extends EventEmitter implements MockChildProcess {
   simulateExecution(): void {
     // Simulate async execution
     setTimeout(() => {
-      if (this.result.stdout) {
-        this.stdout.emit('data', this.result.stdout);
-      }
+      // Always emit stdout and stderr data, even if empty
+      this.stdout.emit('data', Buffer.from(this.result.stdout || ''));
+      
       if (this.result.stderr) {
-        this.stderr.emit('data', this.result.stderr);
+        this.stderr.emit('data', Buffer.from(this.result.stderr));
       }
       
       if (this.result.error) {
@@ -51,6 +56,13 @@ class MockChildProcessEmitter extends EventEmitter implements MockChildProcess {
         this.emit('close', 0);
       }
     }, 10);
+  }
+
+  // Add kill implementation to track killed state
+  killProcess(signal?: string): boolean {
+    this.killed = true;
+    this.kill(signal);
+    return true;
   }
 }
 
@@ -70,12 +82,38 @@ export function clearMockExecResults(): void {
 // Mock spawn function
 export const spawn = jest.fn().mockImplementation((command: string, args: string[] = []) => {
   const fullCommand = `${command} ${args.join(' ')}`.trim();
-  const result = mockExecResults.get(fullCommand) || {
-    stdout: 'Mock command executed successfully',
-    stderr: ''
-  };
+  
+  console.log('Mock spawn called with:', fullCommand);
+  
+  // Try exact match first
+  let result = mockExecResults.get(fullCommand);
+  
+  // Try pattern matching for common scenarios
+  if (!result) {
+    for (const [pattern, mockResult] of mockExecResults.entries()) {
+      console.log('Checking pattern:', pattern, 'against:', fullCommand);
+      if (fullCommand.includes('--version') && pattern.includes('--version')) {
+        result = mockResult;
+        console.log('Found matching pattern:', pattern);
+        break;
+      }
+    }
+  }
+  
+  // Default result
+  if (!result) {
+    result = {
+      stdout: 'Mock command executed successfully',
+      stderr: ''
+    };
+    console.log('Using default result');
+  } else {
+    console.log('Using result:', result);
+  }
 
   const mockProcess = new MockChildProcessEmitter(result);
+  
+  console.log('Created mock process with pid:', mockProcess.pid);
   
   // Start simulation after next tick
   process.nextTick(() => {
@@ -124,4 +162,36 @@ setMockExecResult('gemini-cli --version', {
 setMockExecResult('git --version', {
   stdout: 'git version 2.34.1',
   stderr: ''
+});
+
+// Common Gemini CLI ask command mock results
+setMockExecResult('gemini-cli ask --model gemini-2.5-flash --temperature 0.7 --top-p 0.9 --top-k 40 --max-output-tokens 4096 --prompt You are a code analysis assistant.\n\nQuestion: What does this code do? --directory /tmp/test_repo_main_abc123', {
+  stdout: 'This is a test repository that demonstrates basic functionality.',
+  stderr: ''
+});
+
+// Mock successful JSON response
+setMockExecResult('gemini-cli ask --model gemini-2.5-flash --temperature 0.7 --top-p 0.9 --top-k 40 --max-output-tokens 4096 --prompt You are a code analysis assistant.\n\nQuestion: What is the main purpose of this code? --directory /tmp/test_repo_main_abc123', {
+  stdout: '{"answer": "This code implements a web server with REST API endpoints.", "tokens_used": 150}',
+  stderr: ''
+});
+
+// Mock error scenarios
+setMockExecResult('gemini-cli ask --model invalid-model --temperature 0.7 --top-p 0.9 --top-k 40 --max-output-tokens 4096 --prompt Test prompt --directory /tmp/test_repo_main_abc123', {
+  stdout: '',
+  stderr: 'Error: Invalid model specified: invalid-model',
+  error: new Error('Command failed with exit code 1')
+});
+
+setMockExecResult('gemini-cli ask --model gemini-2.5-flash --temperature 0.7 --top-p 0.9 --top-k 40 --max-output-tokens 4096 --prompt Test prompt --directory /nonexistent/path', {
+  stdout: '',
+  stderr: 'Error: Repository directory not found: /nonexistent/path',
+  error: new Error('Command failed with exit code 1')
+});
+
+// Mock API timeout/rate limiting
+setMockExecResult('gemini-cli ask --model gemini-2.5-flash --temperature 0.7 --top-p 0.9 --top-k 40 --max-output-tokens 4096 --prompt Rate limit test --directory /tmp/test_repo_main_abc123', {
+  stdout: '',
+  stderr: 'Error: API rate limit exceeded. Please try again later.',
+  error: new Error('Command failed with exit code 429')
 }); 
