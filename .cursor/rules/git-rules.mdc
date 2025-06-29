@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+执行任何 Git 操作之前，请先确保命令严格遵守 [GIT_GUIDELINES.md](mdc:GIT_GUIDELINES.md) 里面的规定。
