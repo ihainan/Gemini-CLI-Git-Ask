@@ -20,7 +20,12 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "clean": "rm -rf dist",
-    "prebuild": "npm run clean"
+    "prebuild": "npm run clean",
+    "docker:build": "docker build -t gemini-git-ask-service .",
+    "docker:run": "docker run -p 8080:8080 -v ~/.gemini:/home/appuser/.gemini:ro gemini-git-ask-service",
+    "docker:compose:up": "cd ../docker && docker-compose up -d",
+    "docker:compose:down": "cd ../docker && docker-compose down",
+    "docker:compose:logs": "cd ../docker && docker-compose logs -f"
   },
   "keywords": [
     "gemini",

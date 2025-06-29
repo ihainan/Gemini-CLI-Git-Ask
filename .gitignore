@@ -64,4 +64,4 @@ src/**/*.js.map
 .eslintcache
 
 # Prettier cache
-.prettiercache 
+.prettiercache docker/data/

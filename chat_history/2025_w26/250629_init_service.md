@@ -475,3 +475,9 @@ grep "repository_url_here" logs/service.log | grep -E "(stats|decision|all_files
 优先级中等: 添加更多的性能和负载测试
 优先级低: 优化测试执行速度和资源使用
 ````
+
+
+```` markdown
+请帮我检查一下 @design.md ，检查下一步我们有哪些工作可以做，你建议优先做哪一个。
+
+````
