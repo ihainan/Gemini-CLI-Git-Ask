@@ -5,11 +5,11 @@ server:
 
 gemini:
   model: "gemini-1.5-flash-latest"
-  temperature: 0.7
-  top_p: 0.9
-  top_k: 40
-  max_output_tokens: 4096
   api_timeout: 300
+  all_files_mode: "auto"  # "always", "never", "auto"
+  auto_all_files_thresholds:
+    max_files: 200
+    max_size_mb: 10
   base_prompt: |
     You are a code analysis assistant. Please analyze the provided repository 
     and answer questions about the codebase accurately and concisely.

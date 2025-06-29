@@ -313,3 +313,142 @@ Gemini CLI 命令执行
 7. 请检查是否需要更新 @README.me 和 @design.md
 8. 请 git commit 本次任务的修改内容
 ````
+
+## Implement API routers
+
+```` markdown
+0. 请帮我检查一下 @design.md ，检查下一步我们有哪些工作可以做，你建议优先做哪一个。
+1. 请帮我实现请帮我实现核心功能部分部分。
+2. 我建议你根目录下的 gemini-cli（这个是 Gemini CLI 的完整原始代码，供参考），来获取非交互模式下的 gemini 参数列表。
+3. 你把 repo clone 到了本地目录，npm run dev 检测到目录变化，重启了服务。
+4. @config.yaml.example 和 @config.yaml 里面不被 gemini 接受的配置参数也应该删除掉。
+5. 请通过查询根目录下 gemini-cli 项目的实现，判断 --all-files 是否是个合适的参数。
+6. 让我们在 @config.yaml 和 @config.yaml.example 里面添加一个配置项，用来配置是否开启 --all-files，三种选择，全局打开，全局关闭，动态抉择。并做具体的实现
+5. 请检查 @/tests ，结合 @README.md  检查我们是否需要根据我们上面的修改，更新我们的测试以及文档。
+6. 请检查是否需要更新 @design.md
+7. 请 git commit 本次任务的修改内容
+````
+
+### LLM Key Responses
+
+```` markdown
+我达到了3次修复限制。让我删除这个有问题的测试文件并重新创建一个简化版本。(gemini-factory.test.ts)
+````
+
+ALL_FILES_FEATURE.md: 
+
+
+```` markdown
+# All Files 配置功能
+
+## 概述
+为 Gemini CLI 集成添加了智能的 `--all_files` 参数控制功能，支持三种模式：
+- **always**: 总是使用 `--all_files` 参数
+- **never**: 从不使用 `--all_files` 参数  
+- **auto**: 根据仓库统计信息智能决策
+
+## 配置说明
+
+### 配置文件位置
+- `service/config.yaml`
+- `service/config.yaml.example`
+
+### 配置项
+```yaml
+gemini:
+  all_files_mode: "auto"  # "always", "never", "auto"
+  auto_all_files_thresholds:
+    max_files: 200      # 最大文件数阈值
+    max_size_mb: 10     # 最大仓库大小阈值 (MB)
+```
+
+## 三种模式说明
+
+### 1. Always 模式 (`"always"`)
+- 无论仓库大小，总是使用 `--all_files` 参数
+- 适用于明确知道所有仓库都比较小的场景
+
+### 2. Never 模式 (`"never"`)
+- 从不使用 `--all_files` 参数
+- 适用于处理大型仓库或想要节省API tokens的场景
+
+### 3. Auto 模式 (`"auto"`) - 推荐
+- 根据仓库统计信息智能决策
+- 只有当仓库同时满足以下条件时才使用 `--all_files`:
+  - 文件数 ≤ `max_files`
+  - 仓库大小 ≤ `max_size_mb`
+- 默认阈值：200个文件，10MB
+
+## 实现细节
+
+### 核心组件
+1. **配置管理**: `ConfigManager` 负责读取和验证配置
+2. **仓库统计**: `RepositoryManager.getSingleRepositoryStats()` 获取仓库统计信息
+3. **智能决策**: `GeminiExecutor.shouldUseAllFiles()` 根据配置和统计信息决策
+4. **执行集成**: `GeminiExecutor.executeGeminiCli()` 根据决策添加参数
+
+### 仓库统计信息
+```typescript
+interface SingleRepositoryStats {
+  fileCount: number;        // 总文件数（不包括.git目录）
+  totalSizeMb: number;      // 总大小（MB）
+  codeFileCount: number;    // 代码文件数
+  largestFileSizeMb: number; // 最大单文件大小（MB）
+}
+```
+
+### 日志记录
+服务会记录以下关键信息：
+- 仓库统计信息: `Repository stats: X files, XMB, X code files`
+- 自动决策过程: `Auto mode decision: files=X/200, size=XMB/10MB, use_all_files=true/false`
+- 最终决策: `Using --all_files: true/false (mode: auto/always/never)`
+
+## 使用示例
+
+### 查看决策过程
+```bash
+# 查看服务日志
+tail -f logs/service.log | grep -E "(Repository stats|Auto mode|Using --all_files)"
+```
+
+### 测试不同模式
+```bash
+# 测试 API 请求
+curl -X POST http://localhost:28080/api/v1/ask \
+  -H "Content-Type: application/json" \
+  -d '{
+    "repository_url": "https://github.com/octocat/Hello-World",
+    "question": "What files are in this repository?"
+  }'
+```
+
+## 性能考虑
+
+### 使用 `--all_files` 的优点
+- 提供完整的仓库上下文
+- 更准确的代码分析结果
+- 更好的跨文件关系理解
+
+### 使用 `--all_files` 的缺点
+- 增加API token消耗
+- 可能达到上下文长度限制
+- 处理时间可能更长
+
+### 推荐设置
+- 小团队/小项目: `"always"`
+- 大型企业/混合项目: `"auto"` (默认阈值)
+- 成本敏感环境: `"never"` 或调低 `auto` 阈值
+
+## 故障排除
+
+### 常见问题
+1. **配置不生效**: 重启服务使配置生效
+2. **统计信息获取失败**: 检查仓库访问权限和磁盘空间
+3. **决策意外**: 检查日志中的统计信息和阈值
+
+### 调试技巧
+```bash
+# 查看特定请求的完整决策过程
+grep "repository_url_here" logs/service.log | grep -E "(stats|decision|all_files)"
+``` 
+````

@@ -193,6 +193,7 @@ import { TestAssertions } from '../helpers/test-utils';
 TestAssertions.assertSuccessResponse(response.body);
 TestAssertions.assertErrorResponse(errorResponse.body);
 TestAssertions.assertValidRepositoryMetadata(metadata);
+TestAssertions.assertValidSingleRepositoryStats(stats);
 
 // Example usage in tests
 it('should return valid success response', async () => {
@@ -203,6 +204,17 @@ it('should return valid success response', async () => {
   
   // Now TypeScript knows response.body is AskSuccessResponse
   expect(response.body.execution_time).toBeGreaterThan(0);
+});
+
+// Testing repository statistics
+it('should return valid repository statistics', async () => {
+  const stats = await repositoryManager.getSingleRepositoryStats(repoPath);
+  
+  // Validates all required properties and data types
+  TestAssertions.assertValidSingleRepositoryStats(stats);
+  
+  expect(stats.fileCount).toBeGreaterThan(0);
+  expect(stats.codeFileCount).toBeLessThanOrEqual(stats.fileCount);
 });
 ```
 
@@ -705,11 +717,22 @@ npm test -- --detectOpenHandles --forceExit
 - ✅ Mock system implementation
 - ✅ CI/CD integration
 
-#### Upcoming Version 1.1.0
+#### Version 1.1.0 (Current)
 - ✅ Complete RepositoryManager tests
 - ✅ Complete GeminiExecutor tests  
-- 🎯 API integration tests implementation
+- ✅ API integration tests implementation
+- ✅ All Files Configuration Feature Tests
+  - ✅ Updated MockDataFactory with new configuration options
+  - ✅ Added SingleRepositoryStats mock and assertions
+  - ✅ Updated GeminiFactory tests for new configuration structure
+  - ✅ Enhanced ConfigManager tests with all_files_mode and auto_all_files_thresholds
+  - ✅ Updated child_process mocks for new Gemini CLI format
 - 🎯 Increase coverage to 95%+
+
+#### Version 1.2.0 (Upcoming)
+- 🎯 Complete all remaining integration tests
+- 🎯 Performance optimization tests
+- 🎯 Advanced error scenario testing
 
 ### Contributing to Tests 🤝
 
@@ -725,6 +748,35 @@ npm test -- --detectOpenHandles --forceExit
 3. **API Endpoints** - Critical for service functionality 🎯
 4. **LockManager** - Important for concurrency
 5. **CleanupService** - Important for maintenance
+
+---
+
+### All Files Configuration Feature Update 🆕
+
+**New Functionality Added:**
+- ✅ **All Files Mode Configuration**: Three modes (always, never, auto) for intelligent `--all_files` flag control
+- ✅ **Repository Statistics**: New `getSingleRepositoryStats()` method for analyzing repository size and file count
+- ✅ **Auto Mode Intelligence**: Dynamic decision-making based on configurable thresholds (file count and size)
+- ✅ **Type Safety**: New `SingleRepositoryStats` interface with comprehensive validation
+- ✅ **Test Coverage**: Full test suite coverage for new configuration options and functionality
+
+**Updated Test Infrastructure:**
+- ✅ Enhanced `MockDataFactory` with `createMockSingleRepositoryStats()` method
+- ✅ Added `TestAssertions.assertValidSingleRepositoryStats()` for type-safe validation
+- ✅ Updated configuration mocks to include new `all_files_mode` and `auto_all_files_thresholds`
+- ✅ Modernized child_process mocks to reflect new Gemini CLI command format (pipe-based)
+- ✅ Comprehensive test coverage for all three all_files modes
+
+**Configuration Example:**
+```yaml
+gemini:
+  all_files_mode: "auto"  # "always", "never", "auto"
+  auto_all_files_thresholds:
+    max_files: 200      # Maximum file count threshold
+    max_size_mb: 10     # Maximum repository size threshold (MB)
+```
+
+This update ensures intelligent resource management and optimal performance when analyzing repositories of different sizes.
 
 ---
 

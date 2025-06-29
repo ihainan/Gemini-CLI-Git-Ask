@@ -82,12 +82,52 @@ export class RepositoryManager {
       logger.info(`Cloning repository ${url} to ${repoInfo.localPath}`);
       
       const git = simpleGit();
-      const cloneOptions = [
-        `--depth=${options?.depth || this.config.cloneDepth}`,
-        `--branch=${repoInfo.branch}`
-      ];
+      let actualBranch = repoInfo.branch;
+      let cloneOptions: string[];
 
-      await git.clone(url, repoInfo.localPath, cloneOptions);
+      try {
+        // First try to clone with the specified branch
+        cloneOptions = [
+          `--depth=${options?.depth || this.config.cloneDepth}`,
+          `--branch=${actualBranch}`
+        ];
+        await git.clone(url, repoInfo.localPath, cloneOptions);
+      } catch (branchError) {
+        logger.warn(`Branch ${actualBranch} not found, trying to detect default branch`);
+        
+        // If specific branch fails, try to get the default branch
+        try {
+          const defaultBranch = await this.getDefaultBranch(url);
+          actualBranch = defaultBranch;
+          
+          // Regenerate path with correct branch
+          const newLocalPath = this.generateRepositoryPath(repoInfo.url, actualBranch);
+          
+          logger.info(`Using default branch: ${actualBranch}, new path: ${newLocalPath}`);
+          
+          cloneOptions = [
+            `--depth=${options?.depth || this.config.cloneDepth}`,
+            `--branch=${actualBranch}`
+          ];
+          await git.clone(url, newLocalPath, cloneOptions);
+          
+          // Update repoInfo with new path and branch
+          repoInfo.localPath = newLocalPath;
+          repoInfo.branch = actualBranch;
+        } catch (defaultBranchError) {
+          logger.warn(`Failed to detect default branch, trying clone without branch specification`);
+          
+          // Last resort: clone without specifying branch
+          cloneOptions = [`--depth=${options?.depth || this.config.cloneDepth}`];
+          await git.clone(url, repoInfo.localPath, cloneOptions);
+          
+                     // Get the actual branch name after clone
+           const repoGit = simpleGit(repoInfo.localPath);
+           const status = await repoGit.status();
+           actualBranch = status.current ? status.current : 'master'; // fallback to master if current is undefined
+           repoInfo.branch = actualBranch;
+        }
+      }
       
       // Get initial commit hash
       const repoGit = simpleGit(repoInfo.localPath);
@@ -97,7 +137,7 @@ export class RepositoryManager {
       // Save metadata
       const metadata: RepositoryMetadata = {
         url: repoInfo.url,
-        branch: repoInfo.branch,
+        branch: actualBranch,
         last_updated: new Date().toISOString(),
         last_accessed: new Date().toISOString(),
         commit_hash: commitHash,
@@ -106,7 +146,7 @@ export class RepositoryManager {
 
       await this.saveRepositoryMetadata(repoInfo.localPath, metadata);
       
-      logger.info(`Successfully cloned repository: ${url}`);
+      logger.info(`Successfully cloned repository: ${url} (branch: ${actualBranch})`);
       return { ...repoInfo, exists: true, metadata };
 
     } catch (error) {
@@ -276,6 +316,75 @@ export class RepositoryManager {
         RepositoryError.STORAGE_ERROR,
         'Failed to get repository statistics',
         { error }
+      );
+    }
+  }
+
+  /**
+   * Get statistics for a single repository
+   */
+  async getSingleRepositoryStats(localPath: string): Promise<import('../types').SingleRepositoryStats> {
+    if (!await this.checkRepositoryExists(localPath)) {
+      throw new RepositoryException(
+        RepositoryError.NOT_FOUND,
+        `Repository not found: ${localPath}`
+      );
+    }
+
+    try {
+      let fileCount = 0;
+      let codeFileCount = 0;
+      let totalSizeBytes = 0;
+      let largestFileSizeBytes = 0;
+
+      const codeExtensions = new Set([
+        '.js', '.ts', '.tsx', '.jsx', '.py', '.java', '.cpp', '.c', '.h', '.hpp',
+        '.cs', '.php', '.rb', '.go', '.rs', '.swift', '.kt', '.scala', '.clj',
+        '.hs', '.elm', '.dart', '.vue', '.svelte', '.md', '.json', '.yaml', '.yml',
+        '.xml', '.html', '.css', '.scss', '.sass', '.less', '.sql', '.sh', '.bash',
+        '.zsh', '.fish', '.ps1', '.bat', '.cmd', '.r', '.m', '.mm', '.pl', '.pm'
+      ]);
+
+      const walkDir = async (dir: string): Promise<void> => {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          
+          // Skip .git directory and other hidden directories
+          if (entry.isDirectory() && !entry.name.startsWith('.')) {
+            await walkDir(fullPath);
+          } else if (entry.isFile()) {
+            const stats = await fs.stat(fullPath);
+            const fileSizeBytes = stats.size;
+            
+            fileCount++;
+            totalSizeBytes += fileSizeBytes;
+            largestFileSizeBytes = Math.max(largestFileSizeBytes, fileSizeBytes);
+            
+            // Check if it's a code file
+            const ext = path.extname(entry.name).toLowerCase();
+            if (codeExtensions.has(ext)) {
+              codeFileCount++;
+            }
+          }
+        }
+      };
+
+      await walkDir(localPath);
+      
+      return {
+        fileCount,
+        totalSizeMb: Math.round((totalSizeBytes / (1024 * 1024)) * 100) / 100,
+        codeFileCount,
+        largestFileSizeMb: Math.round((largestFileSizeBytes / (1024 * 1024)) * 100) / 100
+      };
+    } catch (error) {
+      logger.error(`Failed to get repository stats for ${localPath}:`, error);
+      throw new RepositoryException(
+        RepositoryError.STORAGE_ERROR,
+        'Failed to get repository statistics',
+        { localPath, error }
       );
     }
   }
@@ -474,13 +583,19 @@ export class RepositoryManager {
 
   private async acquireLock(lockPath: string, options?: LockOptions): Promise<() => Promise<void>> {
     try {
+      // Ensure the lock directory exists
+      await fs.mkdir(this.lockDir, { recursive: true });
+      
       const lockOptions = {
-        retries: options?.retries || 3,
-        retryInterval: options?.retryInterval || 1000
+        retries: options?.retries || 5,
+        retryWait: options?.retryInterval || 500,
+        stale: options?.timeout || 60000, // Default 60 seconds stale time
+        realpath: false // Don't resolve symlinks
       };
       
       return await lockfile.lock(lockPath, lockOptions);
     } catch (error) {
+      logger.error(`Lock acquisition failed for ${lockPath}:`, error);
       throw new RepositoryException(
         RepositoryError.LOCK_FAILED,
         `Failed to acquire lock: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -510,5 +625,54 @@ export class RepositoryManager {
     }
     
     return size;
+  }
+
+  /**
+   * Get the default branch of a remote repository
+   */
+  private async getDefaultBranch(url: string): Promise<string> {
+    try {
+      const git = simpleGit();
+      
+      // Use ls-remote to get the default branch
+      const result = await git.listRemote(['--symref', url, 'HEAD']);
+      
+      // Parse the result to extract the default branch
+      // Format: "ref: refs/heads/main	HEAD"
+      const lines = result.split('\n');
+      for (const line of lines) {
+        if (line.includes('ref: refs/heads/')) {
+          const match = line.match(/ref: refs\/heads\/([^\s]+)/);
+          if (match && match[1]) {
+            logger.info(`Detected default branch: ${match[1]} for ${url}`);
+            return match[1];
+          }
+        }
+      }
+      
+      // Fallback: try common default branch names
+      const commonBranches = ['main', 'master', 'develop', 'dev'];
+      logger.warn(`Could not detect default branch for ${url}, trying common names`);
+      
+      for (const branch of commonBranches) {
+        try {
+          await git.listRemote([url, `refs/heads/${branch}`]);
+          logger.info(`Found existing branch: ${branch} for ${url}`);
+          return branch;
+        } catch {
+          // Branch doesn't exist, continue
+        }
+      }
+      
+      throw new Error('No suitable branch found');
+      
+    } catch (error) {
+      logger.error(`Failed to detect default branch for ${url}:`, error);
+      throw new RepositoryException(
+        RepositoryError.CLONE_FAILED,
+        `Failed to detect default branch: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { url, error }
+      );
+    }
   }
 } 

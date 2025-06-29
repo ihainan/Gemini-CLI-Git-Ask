@@ -6,7 +6,7 @@
 
 import { RepositoryManager } from '../../../src/services/repository-manager';
 import { RepositoryManagerConfig, RepositoryError, RepositoryException } from '../../../src/types';
-import { MockDataFactory, TestEnvironmentUtils } from '../../helpers/test-utils';
+import { MockDataFactory, TestEnvironmentUtils, TestAssertions } from '../../helpers/test-utils';
 import * as path from 'path';
 
 // Mock simple-git
@@ -344,6 +344,69 @@ describe('RepositoryManager', () => {
       expect(result.diskUsage).toBeGreaterThanOrEqual(0);
       expect(result.oldestAccess).toBe('2024-01-01T00:00:00.000Z');
       expect(result.newestAccess).toBe('2024-01-02T00:00:00.000Z');
+    });
+  });
+
+  describe('getSingleRepositoryStats', () => {
+    it('should get repository statistics successfully', async () => {      
+      // Mock directory structure
+      const mockDirents = [
+        { name: 'file1.ts', isDirectory: () => false, isFile: () => true },
+        { name: 'file2.js', isDirectory: () => false, isFile: () => true },
+        { name: 'README.md', isDirectory: () => false, isFile: () => true },
+        { name: 'package.json', isDirectory: () => false, isFile: () => true },
+        { name: 'src', isDirectory: () => true, isFile: () => false },
+        { name: 'node_modules', isDirectory: () => true, isFile: () => false }
+      ];
+      
+      const mockSrcDirents = [
+        { name: 'index.ts', isDirectory: () => false, isFile: () => true },
+        { name: 'utils.js', isDirectory: () => false, isFile: () => true }
+      ];
+      
+      // Mock repository existence check
+      mockFs.access.mockResolvedValue(undefined);
+      
+      // Mock readdir calls
+      mockFs.readdir.mockImplementation((path: string, options?: any) => {
+        if (path.includes('/src')) {
+          return Promise.resolve(mockSrcDirents);
+        }
+        return Promise.resolve(mockDirents);
+      });
+      
+      // Mock file stats (1KB per file)
+      mockFs.stat.mockResolvedValue({ size: 1024, isDirectory: () => false, isFile: () => true });
+      
+      const repoPath = '/tmp/test_repo_main_abc123';
+      const stats = await repositoryManager.getSingleRepositoryStats(repoPath);
+      
+      // Use test assertion helper
+      TestAssertions.assertValidSingleRepositoryStats(stats);
+      expect(stats.fileCount).toBeGreaterThan(0);
+      expect(stats.codeFileCount).toBeGreaterThan(0);
+      expect(stats.totalSizeMb).toBeGreaterThan(0);
+    });
+
+    it('should throw error for non-existent repository', async () => {
+      const nonExistentPath = '/nonexistent/path';
+      mockFs.access.mockRejectedValue(new Error('ENOENT'));
+      
+      await expect(repositoryManager.getSingleRepositoryStats(nonExistentPath))
+        .rejects.toThrow('Repository not found');
+    });
+
+    it('should handle empty repository', async () => {
+      const emptyPath = '/tmp/empty_repo';
+      mockFs.access.mockResolvedValue(undefined);
+      mockFs.readdir.mockResolvedValue([]);
+      
+      const stats = await repositoryManager.getSingleRepositoryStats(emptyPath);
+      
+      expect(stats.fileCount).toBe(0);
+      expect(stats.codeFileCount).toBe(0);
+      expect(stats.totalSizeMb).toBe(0);
+      expect(stats.largestFileSizeMb).toBe(0);
     });
   });
 

@@ -154,6 +154,12 @@ export const execSync = jest.fn().mockImplementation((command: string) => {
 });
 
 // Set default mock results for common commands
+setMockExecResult('gemini --version', {
+  stdout: 'gemini version 1.0.0',
+  stderr: ''
+});
+
+// Also keep the old one for backward compatibility
 setMockExecResult('gemini-cli --version', {
   stdout: 'gemini-cli version 1.0.0',
   stderr: ''
@@ -164,33 +170,39 @@ setMockExecResult('git --version', {
   stderr: ''
 });
 
-// Common Gemini CLI ask command mock results
-setMockExecResult('gemini-cli ask --model gemini-2.5-flash --temperature 0.7 --top-p 0.9 --top-k 40 --max-output-tokens 4096 --prompt You are a code analysis assistant.\n\nQuestion: What does this code do? --directory /tmp/test_repo_main_abc123', {
+// Common Gemini CLI ask command mock results - updated to use new format
+setMockExecResult('echo "You are a code analysis assistant.\n\nQuestion: What does this code do?" | gemini --model gemini-2.5-flash --all_files', {
   stdout: 'This is a test repository that demonstrates basic functionality.',
   stderr: ''
 });
 
 // Mock successful JSON response
-setMockExecResult('gemini-cli ask --model gemini-2.5-flash --temperature 0.7 --top-p 0.9 --top-k 40 --max-output-tokens 4096 --prompt You are a code analysis assistant.\n\nQuestion: What is the main purpose of this code? --directory /tmp/test_repo_main_abc123', {
+setMockExecResult('echo "You are a code analysis assistant.\n\nQuestion: What is the main purpose of this code?" | gemini --model gemini-2.5-flash --all_files', {
   stdout: '{"answer": "This code implements a web server with REST API endpoints.", "tokens_used": 150}',
   stderr: ''
 });
 
+// Mock commands without all_files flag
+setMockExecResult('echo "You are a code analysis assistant.\n\nQuestion: What does this code do?" | gemini --model gemini-2.5-flash', {
+  stdout: 'This code demonstrates basic functionality (analyzed without full context).',
+  stderr: ''
+});
+
 // Mock error scenarios
-setMockExecResult('gemini-cli ask --model invalid-model --temperature 0.7 --top-p 0.9 --top-k 40 --max-output-tokens 4096 --prompt Test prompt --directory /tmp/test_repo_main_abc123', {
+setMockExecResult('echo "Test prompt" | gemini --model invalid-model', {
   stdout: '',
   stderr: 'Error: Invalid model specified: invalid-model',
   error: new Error('Command failed with exit code 1')
 });
 
-setMockExecResult('gemini-cli ask --model gemini-2.5-flash --temperature 0.7 --top-p 0.9 --top-k 40 --max-output-tokens 4096 --prompt Test prompt --directory /nonexistent/path', {
+setMockExecResult('echo "Test prompt" | gemini --model gemini-2.5-flash', {
   stdout: '',
   stderr: 'Error: Repository directory not found: /nonexistent/path',
   error: new Error('Command failed with exit code 1')
 });
 
 // Mock API timeout/rate limiting
-setMockExecResult('gemini-cli ask --model gemini-2.5-flash --temperature 0.7 --top-p 0.9 --top-k 40 --max-output-tokens 4096 --prompt Rate limit test --directory /tmp/test_repo_main_abc123', {
+setMockExecResult('echo "Rate limit test" | gemini --model gemini-2.5-flash', {
   stdout: '',
   stderr: 'Error: API rate limit exceeded. Please try again later.',
   error: new Error('Command failed with exit code 429')

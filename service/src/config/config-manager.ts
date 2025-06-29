@@ -10,11 +10,12 @@ interface Config {
   };
   gemini: {
     model: string;
-    temperature: number;
-    top_p: number;
-    top_k: number;
-    max_output_tokens: number;
     api_timeout: number;
+    all_files_mode: 'always' | 'never' | 'auto';
+    auto_all_files_thresholds: {
+      max_files: number;
+      max_size_mb: number;
+    };
     base_prompt: string;
   };
   repository: {

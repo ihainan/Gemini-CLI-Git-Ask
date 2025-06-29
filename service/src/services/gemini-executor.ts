@@ -27,7 +27,7 @@ export class GeminiExecutor {
 
   constructor(config: GeminiExecutorConfig) {
     this.config = config;
-    this.cliPath = config.cliPath || 'gemini-cli';
+    this.cliPath = config.cliPath || 'gemini';
     this.maxBuffer = config.maxBuffer || 1024 * 1024 * 10; // 10MB default
   }
 
@@ -183,20 +183,67 @@ export class GeminiExecutor {
   }
 
   /**
+   * Determine whether to use --all_files flag based on configuration and repository stats
+   */
+  private shouldUseAllFiles(request: GeminiRequest): boolean {
+    const mode = this.config.allFilesMode;
+    
+    switch (mode) {
+      case 'always':
+        return true;
+      
+      case 'never':
+        return false;
+      
+      case 'auto':
+        if (!request.repositoryStats) {
+          // If no stats available, default to false for safety
+          logger.warn('Repository stats not available for auto mode, defaulting to not using --all_files');
+          return false;
+        }
+        
+        const { fileCount, totalSizeMb } = request.repositoryStats;
+        const thresholds = this.config.autoAllFilesThresholds;
+        
+        // Use --all_files if repository is small enough
+        const withinFileLimit = fileCount <= thresholds.maxFiles;
+        const withinSizeLimit = totalSizeMb <= thresholds.maxSizeMb;
+        
+        const shouldUse = withinFileLimit && withinSizeLimit;
+        
+        logger.info(`Auto mode decision: files=${fileCount}/${thresholds.maxFiles}, size=${totalSizeMb}MB/${thresholds.maxSizeMb}MB, use_all_files=${shouldUse}`);
+        
+        return shouldUse;
+      
+      default:
+        logger.warn(`Unknown all_files_mode: ${mode}, defaulting to false`);
+        return false;
+    }
+  }
+
+  /**
    * Execute Gemini CLI with the prepared prompt
    */
   private async executeGeminiCli(prompt: string, request: GeminiRequest): Promise<GeminiCliResult> {
-    const args = [
-      this.cliPath,
-      'ask',
-      '--model', this.config.model,
-      '--temperature', this.config.temperature.toString(),
-      '--top-p', this.config.topP.toString(),
-      '--top-k', this.config.topK.toString(),
-      '--max-output-tokens', this.config.maxOutputTokens.toString(),
-      '--prompt', prompt,
-      '--directory', request.repositoryPath
+    // Escape the prompt for shell execution
+    const escapedPrompt = prompt.replace(/"/g, '\\"').replace(/\$/g, '\\$').replace(/`/g, '\\`');
+    
+    // Build gemini command arguments based on actual CLI options
+    const geminiArgs = [
+      '--model', this.config.model
     ];
+
+    // Decide whether to use --all_files based on configuration
+    const shouldUseAllFiles = this.shouldUseAllFiles(request);
+    if (shouldUseAllFiles) {
+      geminiArgs.push('--all_files');
+    }
+
+    // Add debug flag for more verbose output
+    // geminiArgs.push('--debug');
+
+    // Build the complete shell command using pipe
+    const shellCommand = `echo "${escapedPrompt}" | ${this.cliPath} ${geminiArgs.join(' ')}`;
 
     const options: GeminiExecutionOptions = {
       cwd: request.repositoryPath,
@@ -204,9 +251,75 @@ export class GeminiExecutor {
       maxBuffer: this.maxBuffer
     };
 
-    logger.debug(`Executing Gemini CLI with args: ${args.join(' ')}`);
+    logger.debug(`Executing Gemini CLI command: ${shellCommand}`);
+    logger.debug(`Working directory: ${request.repositoryPath}`);
+    logger.info(`Using --all_files: ${shouldUseAllFiles} (mode: ${this.config.allFilesMode})`);
     
-    return await this.executeCommand(args, options);
+    return await this.executeShellCommand(shellCommand, options);
+  }
+
+  /**
+   * Execute a shell command using child_process exec
+   */
+  private async executeShellCommand(
+    command: string,
+    options: GeminiExecutionOptions = {}
+  ): Promise<GeminiCliResult> {
+    return new Promise((resolve, reject) => {
+      const startTime = Date.now();
+      const timeout = options.timeout || 300000; // 5 minutes default
+      
+      logger.debug(`Executing shell command: ${command}`);
+      
+      const execOptions = {
+        cwd: options.cwd,
+        env: { ...process.env, ...options.env },
+        timeout,
+        maxBuffer: options.maxBuffer || this.maxBuffer
+      };
+      
+      exec(command, execOptions, (error: any, stdout: any, stderr: any) => {
+        const executionTime = Date.now() - startTime;
+        
+        if (error) {
+          logger.error(`Shell command failed after ${executionTime}ms:`, {
+            command,
+            error: error.message,
+            stderr
+          });
+          
+          if (error.message.includes('ENOENT') || error.message.includes('command not found')) {
+            reject(new GeminiException(
+              GeminiError.CLI_NOT_FOUND,
+              `Gemini CLI not found: ${this.cliPath}`,
+              { command, error, executionTime, stderr }
+            ));
+          } else if (error.message.includes('timeout')) {
+            reject(new GeminiException(
+              GeminiError.TIMEOUT_EXCEEDED,
+              `Command execution timed out after ${timeout}ms`,
+              { command, executionTime, timeout, stderr }
+            ));
+          } else {
+            reject(new GeminiException(
+              GeminiError.EXECUTION_FAILED,
+              `Command execution failed: ${error.message}`,
+              { command, error, executionTime, stderr }
+            ));
+          }
+          return;
+        }
+        
+        logger.debug(`Shell command completed successfully in ${executionTime}ms`);
+        
+        resolve({
+          stdout: stdout || '',
+          stderr: stderr || '',
+          exitCode: 0,
+          executionTime
+        });
+      });
+    });
   }
 
   /**

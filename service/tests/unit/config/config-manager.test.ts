@@ -52,11 +52,12 @@ describe('ConfigManager', () => {
       },
       gemini: {
         model: 'gemini-1.5-flash',
-        temperature: 0.7,
-        top_p: 0.9,
-        top_k: 40,
-        max_output_tokens: 4096,
         api_timeout: 300,
+        all_files_mode: 'auto',
+        auto_all_files_thresholds: {
+          max_files: 200,
+          max_size_mb: 10
+        },
         base_prompt: 'You are a helpful assistant'
       },
       repository: {
@@ -171,11 +172,12 @@ describe('ConfigManager', () => {
       },
       gemini: {
         model: 'gemini-1.5-flash',
-        temperature: 0.7,
-        top_p: 0.9,
-        top_k: 40,
-        max_output_tokens: 4096,
         api_timeout: 300,
+        all_files_mode: 'auto',
+        auto_all_files_thresholds: {
+          max_files: 200,
+          max_size_mb: 10
+        },
         base_prompt: 'You are a helpful assistant'
       },
       repository: {
@@ -228,7 +230,7 @@ describe('ConfigManager', () => {
       expect(configManager.get('server.host')).toBe('localhost');
       expect(configManager.get('server.port')).toBe(8080);
       expect(configManager.get('gemini.model')).toBe('gemini-1.5-flash');
-      expect(configManager.get('gemini.temperature')).toBe(0.7);
+      expect(configManager.get('gemini.all_files_mode')).toBe('auto');
     });
 
     it('should get top-level configuration object', () => {
@@ -263,11 +265,12 @@ describe('ConfigManager', () => {
       },
       gemini: { 
         model: 'gemini-1.5-flash',
-        temperature: 0.7,
-        top_p: 0.9,
-        top_k: 40,
-        max_output_tokens: 4096,
         api_timeout: 300,
+        all_files_mode: 'auto',
+        auto_all_files_thresholds: {
+          max_files: 200,
+          max_size_mb: 10
+        },
         base_prompt: 'You are a helpful assistant'
       },
       repository: {

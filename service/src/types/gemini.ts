@@ -4,11 +4,12 @@
 
 export interface GeminiConfig {
   model: string;
-  temperature: number;
-  top_p: number;
-  top_k: number;
-  max_output_tokens: number;
   api_timeout: number;
+  all_files_mode: 'always' | 'never' | 'auto';
+  auto_all_files_thresholds: {
+    max_files: number;
+    max_size_mb: number;
+  };
   base_prompt: string;
 }
 
@@ -17,6 +18,7 @@ export interface GeminiRequest {
   question: string;
   context?: string;
   timeout?: number;
+  repositoryStats?: SingleRepositoryStats;
 }
 
 export interface GeminiResponse {
@@ -64,12 +66,20 @@ export interface GeminiCliResult {
 
 export interface GeminiExecutorConfig {
   model: string;
-  temperature: number;
-  topP: number;
-  topK: number;
-  maxOutputTokens: number;
   apiTimeout: number;
+  allFilesMode: 'always' | 'never' | 'auto';
+  autoAllFilesThresholds: {
+    maxFiles: number;
+    maxSizeMb: number;
+  };
   basePrompt: string;
   cliPath?: string;
   maxBuffer?: number;
+}
+
+export interface SingleRepositoryStats {
+  fileCount: number;
+  totalSizeMb: number;
+  codeFileCount: number;
+  largestFileSizeMb: number;
 } 

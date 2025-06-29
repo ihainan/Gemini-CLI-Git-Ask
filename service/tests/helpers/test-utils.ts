@@ -13,7 +13,8 @@ import {
   GeminiResponse,
   GeminiExecutorConfig,
   GeminiError,
-  GeminiException
+  GeminiException,
+  SingleRepositoryStats
 } from '../../src/types';
 
 /**
@@ -150,14 +151,28 @@ export class MockDataFactory {
   static createMockGeminiExecutorConfig(overrides?: Partial<GeminiExecutorConfig>): GeminiExecutorConfig {
     return {
       model: 'gemini-2.5-flash',
-      temperature: 0.7,
-      topP: 0.9,
-      topK: 40,
-      maxOutputTokens: 4096,
       apiTimeout: 300,
+      allFilesMode: 'auto',
+      autoAllFilesThresholds: {
+        maxFiles: 200,
+        maxSizeMb: 10
+      },
       basePrompt: 'You are a code analysis assistant.',
-      cliPath: 'gemini-cli',
+      cliPath: 'gemini',
       maxBuffer: 1024 * 1024 * 10,
+      ...overrides
+    };
+  }
+
+  /**
+   * Create mock SingleRepositoryStats for testing
+   */
+  static createMockSingleRepositoryStats(overrides?: Partial<SingleRepositoryStats>): SingleRepositoryStats {
+    return {
+      fileCount: 25,
+      totalSizeMb: 2.5,
+      codeFileCount: 18,
+      largestFileSizeMb: 0.5,
       ...overrides
     };
   }
@@ -227,11 +242,12 @@ export class TestEnvironmentUtils {
       },
       gemini: {
         model: 'gemini-1.5-flash-latest',
-        temperature: 0.7,
-        top_p: 0.9,
-        top_k: 40,
-        max_output_tokens: 4096,
         api_timeout: 300,
+        all_files_mode: 'auto',
+        auto_all_files_thresholds: {
+          max_files: 200,
+          max_size_mb: 10
+        },
         base_prompt: 'You are a helpful assistant'
       },
       repository: {
@@ -390,5 +406,24 @@ export class TestAssertions {
     expect(exception).toHaveProperty('name', 'GeminiException');
     expect(Object.values(GeminiError)).toContain(exception.code);
     expect(typeof exception.message).toBe('string');
+  }
+
+  /**
+   * Assert that SingleRepositoryStats is valid
+   */
+  static assertValidSingleRepositoryStats(stats: any): asserts stats is SingleRepositoryStats {
+    expect(stats).toHaveProperty('fileCount');
+    expect(stats).toHaveProperty('totalSizeMb');
+    expect(stats).toHaveProperty('codeFileCount');
+    expect(stats).toHaveProperty('largestFileSizeMb');
+    expect(typeof stats.fileCount).toBe('number');
+    expect(typeof stats.totalSizeMb).toBe('number');
+    expect(typeof stats.codeFileCount).toBe('number');
+    expect(typeof stats.largestFileSizeMb).toBe('number');
+    expect(stats.fileCount).toBeGreaterThanOrEqual(0);
+    expect(stats.totalSizeMb).toBeGreaterThanOrEqual(0);
+    expect(stats.codeFileCount).toBeGreaterThanOrEqual(0);
+    expect(stats.largestFileSizeMb).toBeGreaterThanOrEqual(0);
+    expect(stats.codeFileCount).toBeLessThanOrEqual(stats.fileCount);
   }
 } 

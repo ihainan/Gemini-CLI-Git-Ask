@@ -134,25 +134,19 @@ describe('Type Definitions', () => {
         const config = MockDataFactory.createMockGeminiExecutorConfig();
         
         expect(config.model).toBe('gemini-2.5-flash');
-        expect(config.temperature).toBe(0.7);
-        expect(config.topP).toBe(0.9);
-        expect(config.topK).toBe(40);
-        expect(config.maxOutputTokens).toBe(4096);
         expect(config.apiTimeout).toBe(300);
         expect(config.basePrompt).toBe('You are a code analysis assistant.');
-        expect(config.cliPath).toBe('gemini-cli');
+        expect(config.cliPath).toBe('gemini');
         expect(config.maxBuffer).toBe(1024 * 1024 * 10);
       });
 
       it('should accept overrides', () => {
         const config = MockDataFactory.createMockGeminiExecutorConfig({
           model: 'custom-model',
-          temperature: 0.5,
           cliPath: '/custom/cli/path'
         });
 
         expect(config.model).toBe('custom-model');
-        expect(config.temperature).toBe(0.5);
         expect(config.cliPath).toBe('/custom/cli/path');
       });
     });

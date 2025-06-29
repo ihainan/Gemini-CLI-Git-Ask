@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { ConfigManager } from './config/config-manager';
 import { logger } from './utils/logger';
+import { createApiRoutes } from './api/routes';
+import { errorHandler, notFoundHandler } from './api/middleware/error-handler';
 
 async function bootstrap() {
   try {
@@ -37,6 +39,13 @@ async function bootstrap() {
         timestamp: new Date().toISOString()
       });
     });
+
+    // API routes
+    app.use('/api', createApiRoutes());
+
+    // Error handling middleware (must be last)
+    app.use(notFoundHandler);
+    app.use(errorHandler);
     
     // Start server
     const port = config.get('server.port');

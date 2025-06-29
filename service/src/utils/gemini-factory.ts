@@ -12,13 +12,14 @@ import { GeminiExecutorConfig, GeminiConfig } from '../types';
 export function createGeminiExecutorConfig(geminiConfig: GeminiConfig, cliPath?: string): GeminiExecutorConfig {
   return {
     model: geminiConfig.model,
-    temperature: geminiConfig.temperature,
-    topP: geminiConfig.top_p,
-    topK: geminiConfig.top_k,
-    maxOutputTokens: geminiConfig.max_output_tokens,
     apiTimeout: geminiConfig.api_timeout,
+    allFilesMode: geminiConfig.all_files_mode,
+    autoAllFilesThresholds: {
+      maxFiles: geminiConfig.auto_all_files_thresholds.max_files,
+      maxSizeMb: geminiConfig.auto_all_files_thresholds.max_size_mb
+    },
     basePrompt: geminiConfig.base_prompt,
-    cliPath: cliPath || 'gemini-cli',
+    cliPath: cliPath || 'gemini',
     maxBuffer: 1024 * 1024 * 10 // 10MB default
   };
 }
