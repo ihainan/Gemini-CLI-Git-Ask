@@ -1,0 +1,55 @@
+{
+  "name": "git-ask-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for Git Repository Code Analysis",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "git-ask-mcp-server": "dist/index.js"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "release": "npm version patch && npm publish",
+    "release:minor": "npm version minor && npm publish",
+    "release:major": "npm version major && npm publish"
+  },
+  "keywords": [
+    "mcp",
+    "git",
+    "repository",
+    "analysis",
+    "ai",
+    "code-analysis"
+  ],
+  "author": "Git Ask Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ihainan/Gemini-CLI-Git-Ask.git",
+    "directory": "mcp"
+  },
+  "homepage": "https://github.com/ihainan/Gemini-CLI-Git-Ask/tree/main/mcp",
+  "bugs": {
+    "url": "https://github.com/ihainan/Gemini-CLI-Git-Ask/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+} 

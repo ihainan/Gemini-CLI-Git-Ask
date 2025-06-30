@@ -245,14 +245,18 @@ export class GeminiExecutor {
     // Build the complete shell command using pipe
     const shellCommand = `echo "${escapedPrompt}" | ${this.cliPath} ${geminiArgs.join(' ')}`;
 
+    const requestTimeoutSeconds = request.timeout || this.config.apiTimeout;
+    const timeoutMilliseconds = requestTimeoutSeconds * 1000;
+    
     const options: GeminiExecutionOptions = {
       cwd: request.repositoryPath,
-      timeout: request.timeout || this.config.apiTimeout * 1000,
+      timeout: timeoutMilliseconds,
       maxBuffer: this.maxBuffer
     };
 
     logger.debug(`Executing Gemini CLI command: ${shellCommand}`);
     logger.debug(`Working directory: ${request.repositoryPath}`);
+    logger.info(`Timeout configuration: request=${request.timeout || 'not provided'}s, config=${this.config.apiTimeout}s, final=${requestTimeoutSeconds}s (${timeoutMilliseconds}ms)`);
     logger.info(`Using --all_files: ${shouldUseAllFiles} (mode: ${this.config.allFilesMode})`);
     
     return await this.executeShellCommand(shellCommand, options);

@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "my-stdio-server": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "transport": "stdio",
+      "env": {
+        "DEBUG": "true",
+        "SERVICE_URL": "http://192.168.100.101:8080",
+        "REQUEST_TIMEOUT": "1200",
+        "LOG_LEVEL": "debug"
+      }
+    }
+  }
+}

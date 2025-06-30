@@ -478,6 +478,13 @@ grep "repository_url_here" logs/service.log | grep -E "(stats|decision|all_files
 
 
 ```` markdown
-请帮我检查一下 @design.md ，检查下一步我们有哪些工作可以做，你建议优先做哪一个。
+0. 请帮我检查一下 @design.md ，检查下一步我们有哪些工作可以做，你建议优先做哪一个。
+1. 下一步请帮我进行 Docker容器化，一些要求：
 
+- 容器里面使用 npm install -g @google/gemini-cli 安装 gemini 可执行程序。
+- docker-compose.yml 文件生成在根目录的 docker 目录下面，DOCKERFILE 则是在 service 自己的目录下。
+- 我们不希望用户在容器里面登录，所以我们默认用户已经在 host 环境登录过了，我们在 docker-compose.yml 里面把 ~/.gemini 目录挂载到容器里面相同目录下使用（里面包含登录信息）。
+2. 尝试运行容器并进行测试
+3. 请更新 @design.md
+4. 请 git commit 本次任务的修改内容
 ````

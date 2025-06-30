@@ -23,6 +23,11 @@ service/repository_locks/
 # Configuration files (keep examples)
 service/config.yaml
 
+# MCP Server directories
+mcp/node_modules/
+mcp/dist/
+mcp/package-lock.json
+
 # IDE and editor files
 .vscode/
 .idea/
