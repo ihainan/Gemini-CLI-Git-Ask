@@ -6,7 +6,7 @@ import { ServiceClient, ServiceRequest } from '../client/service-client.js';
 const AskRepositoryArgsSchema = z.object({
   repository_url: z.string().url('Must be a valid Git repository URL'),
   question: z.string().min(1, 'Question cannot be empty'),
-  branch: z.string().optional()
+  branch: z.string().nullable().optional()
 });
 
 export type AskRepositoryArgs = z.infer<typeof AskRepositoryArgsSchema>;
@@ -34,8 +34,8 @@ export function createAskRepositoryTool(): Tool {
           description: 'Your question about the repository'
         },
         branch: {
-          type: 'string',
-          description: 'Specific branch to analyze (optional, default: main/master)'
+          type: ['string', 'null'],
+          description: 'Specific branch to analyze (optional, default: main/master). Can be null.'
         }
       },
       required: ['repository_url', 'question']
@@ -61,7 +61,7 @@ export async function handleAskRepositoryTool(
     const serviceRequest: ServiceRequest = {
       repository_url: validatedArgs.repository_url,
       question: validatedArgs.question,
-      branch: validatedArgs.branch,
+      branch: validatedArgs.branch ?? undefined,
       timeout: config.requestTimeout
     };
 

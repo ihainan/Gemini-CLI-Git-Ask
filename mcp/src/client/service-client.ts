@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const ServiceRequestSchema = z.object({
   repository_url: z.string().url(),
   question: z.string(),
-  branch: z.string().optional(),
+  branch: z.string().nullable().optional(),
   timeout: z.number().optional()
 });
 
