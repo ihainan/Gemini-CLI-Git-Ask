@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini CLI Git Ask</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2563eb;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .btn-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .btn-ask {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-weight: 500;
+        }
+
+        .btn-ask:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-ask:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-container {
+            display: none;
+            margin-top: 30px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+        }
+
+        .result-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e1e5e9;
+            padding-bottom: 10px;
+        }
+
+        .result-content {
+            line-height: 1.7;
+            color: #374151;
+            font-size: 15px;
+        }
+
+        .result-content h1 {
+            color: #1f2937;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 24px 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .result-content h2 {
+            color: #1f2937;
+            font-size: 22px;
+            font-weight: 600;
+            margin: 20px 0 12px 0;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .result-content h3 {
+            color: #1f2937;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 18px 0 10px 0;
+        }
+
+        .result-content h4, .result-content h5, .result-content h6 {
+            color: #374151;
+            font-weight: 600;
+            margin: 16px 0 8px 0;
+        }
+
+        .result-content p {
+            margin: 12px 0;
+            line-height: 1.7;
+        }
+
+        .result-content ul, .result-content ol {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        .result-content li {
+            margin: 6px 0;
+            line-height: 1.6;
+        }
+
+        .result-content ul ul, .result-content ol ol, 
+        .result-content ul ol, .result-content ol ul {
+            margin: 4px 0;
+        }
+
+        .result-content strong {
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        .result-content em {
+            font-style: italic;
+            color: #4b5563;
+        }
+
+        .result-content code {
+            background: #f3f4f6;
+            color: #dc2626;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #e5e7eb;
+        }
+
+        .result-content pre {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .result-content pre code {
+            background: none;
+            color: #1f2937;
+            padding: 0;
+            border: none;
+            font-size: inherit;
+        }
+
+        .result-content blockquote {
+            border-left: 4px solid #2563eb;
+            margin: 20px 0;
+            padding: 16px 20px;
+            background: #f8fafc;
+            border-radius: 0 6px 6px 0;
+            color: #4b5563;
+            font-style: italic;
+        }
+
+        .result-content blockquote p {
+            margin: 0;
+        }
+
+        .result-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+
+        .result-content th,
+        .result-content td {
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .result-content th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .result-content tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .result-content a {
+            color: #2563eb;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .result-content a:hover {
+            border-bottom-color: #2563eb;
+        }
+
+        .result-content hr {
+            border: none;
+            height: 1px;
+            background: #e5e7eb;
+            margin: 24px 0;
+        }
+
+        .result-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            margin: 16px 0;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Gemini CLI Git Ask</h1>
+            <p>Ask questions about any GitHub repository using AI</p>
+        </div>
+
+        <div class="form-container">
+            <form id="askForm">
+                <div class="form-group">
+                    <label for="repoUrl">GitHub Repository URL</label>
+                    <input type="url" id="repoUrl" name="repoUrl" placeholder="https://github.com/owner/repo" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="question">Your Question</label>
+                    <textarea id="question" name="question" placeholder="What would you like to know about this repository?" required></textarea>
+                </div>
+
+                <div class="btn-container">
+                    <button type="submit" class="btn-ask" id="askBtn">Ask AI Assistant</button>
+                </div>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>AI is analyzing the repository and preparing your answer...</p>
+            </div>
+
+            <div class="result-container" id="resultContainer">
+                <div class="result-title">AI Assistant Response</div>
+                <div class="result-content" id="resultContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Markdown parser -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/16.0.0/lib/marked.umd.min.js" 
+            onerror="this.onerror=null; this.src='https://unpkg.com/marked@16.0.0/lib/marked.umd.min.js'"></script>
+    
+    <script>
+        // Example data
+        const examples = {
+            repos: [
+                'https://github.com/microsoft/vscode',
+                'https://github.com/facebook/react',
+                'https://github.com/vuejs/vue',
+                'https://github.com/angular/angular',
+                'https://github.com/nodejs/node',
+                'https://github.com/django/django',
+                'https://github.com/kubernetes/kubernetes',
+                'https://github.com/docker/docker-ce',
+                'https://github.com/tensorflow/tensorflow',
+                'https://github.com/pytorch/pytorch'
+            ],
+            questions: [
+                'What is this project about and what problem does it solve?',
+                'How do I get started with this project? What are the installation steps?',
+                'What are the main features and capabilities of this project?',
+                'What is the architecture of this project? How is the code organized?',
+                'How can I contribute to this project? What is the contribution process?',
+                'What are the most important files in this repository?',
+                'What technologies and frameworks does this project use?',
+                'Are there any recent major changes or updates to this project?',
+                'What are the common issues or problems users face with this project?',
+                'How does this project compare to similar alternatives?'
+            ]
+        };
+
+        function getRandomExample(type) {
+            const list = examples[type];
+            return list[Math.floor(Math.random() * list.length)];
+        }
+
+        // Set random examples when clicking input fields
+        document.getElementById('repoUrl').addEventListener('focus', function() {
+            if (!this.value) {
+                this.value = getRandomExample('repos');
+            }
+        });
+
+        document.getElementById('question').addEventListener('focus', function() {
+            if (!this.value) {
+                this.value = getRandomExample('questions');
+            }
+        });
+
+        // Set initial random examples
+        window.addEventListener('load', function() {
+            document.getElementById('repoUrl').value = getRandomExample('repos');
+            document.getElementById('question').value = getRandomExample('questions');
+        });
+
+        // Form submission
+        document.getElementById('askForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const repoUrl = document.getElementById('repoUrl').value.trim();
+            const question = document.getElementById('question').value.trim();
+            
+            if (!repoUrl || !question) {
+                alert('Please fill in both repository URL and question.');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('askBtn').disabled = true;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultContainer').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        repository_url: repoUrl,
+                        question: question
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                
+                // Show result
+                const resultContent = document.getElementById('resultContent');
+                if (data.answer) {
+                    resultContent.innerHTML = marked.parse(data.answer);
+                } else if (data.error) {
+                    resultContent.innerHTML = `<div style="color: #d32f2f; padding: 15px; background: #ffebee; border-radius: 6px;"><strong>Error:</strong> ${data.error}</div>`;
+                } else {
+                    resultContent.innerHTML = '<div style="color: #f57c00; padding: 15px; background: #fff3e0; border-radius: 6px;">No answer received from the AI assistant.</div>';
+                }
+                
+                document.getElementById('resultContainer').style.display = 'block';
+                
+                // Scroll to result
+                document.getElementById('resultContainer').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                
+                // Show error
+                document.getElementById('resultContent').innerHTML = `
+                    <div style="color: #d32f2f; padding: 15px; background: #ffebee; border-radius: 6px;">
+                        <strong>Error:</strong> Failed to get response from AI assistant. Please try again later.
+                        <br><small>Details: ${error.message}</small>
+                    </div>
+                `;
+                document.getElementById('resultContainer').style.display = 'block';
+            } finally {
+                // Re-enable button
+                document.getElementById('askBtn').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html> 
