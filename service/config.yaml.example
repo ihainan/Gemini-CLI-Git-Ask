@@ -4,24 +4,28 @@ server:
   max_concurrent_requests: 100
 
 gemini:
-  model: "gemini-1.5-flash-latest"
+  model: "gemini-2.5-flash"
   api_timeout: 300
   all_files_mode: "auto"  # "always", "never", "auto"
   auto_all_files_thresholds:
-    max_files: 200
-    max_size_mb: 10
+    max_files: 5
+    max_size_mb: 1
   base_prompt: |
     You are a code analysis assistant. Please analyze the provided repository 
     and answer questions about the codebase accurately and concisely.
-    
+
+    Your answer must include all information required by the question, so the user does not need to check any project files.
+
+    Do not output anything except your answer. Do not add summaries, disclaimers, or any extra information beyond the direct answer.
+
     When analyzing code, consider:
     - Overall architecture and design patterns
     - Code structure and organization
     - Key functionality and features
     - Dependencies and integrations
     - Best practices and potential improvements
-    
-    Provide detailed, accurate responses based on the actual codebase.
+
+    Only output the answer. Do not output any additional or unrelated information.
 
 repository:
   storage_path: "./repositories"
@@ -40,7 +44,7 @@ cleanup:
   cleanup_on_startup: false
 
 logging:
-  level: "INFO"  # DEBUG, INFO, WARN, ERROR
+  level: "DEBUG"  # DEBUG, INFO, WARN, ERROR
   file: "./logs/service.log"
   max_size_mb: 100
   backup_count: 5

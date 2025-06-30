@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { ConfigManager } from './config/config-manager';
-import { logger } from './utils/logger';
+import { logger, configureLogger } from './utils/logger';
 import { createApiRoutes } from './api/routes';
 import { errorHandler, notFoundHandler } from './api/middleware/error-handler';
 
@@ -11,6 +11,9 @@ async function bootstrap() {
     // Load configuration
     const config = ConfigManager.getInstance();
     await config.load();
+    
+    // Reconfigure logger with loaded configuration
+    configureLogger(config.getAll());
     
     // Create Express app
     const app = express();
