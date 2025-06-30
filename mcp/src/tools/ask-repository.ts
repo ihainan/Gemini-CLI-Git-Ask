@@ -4,7 +4,7 @@ import { ServiceClient, ServiceRequest } from '../client/service-client.js';
 
 // Tool argument schema
 const AskRepositoryArgsSchema = z.object({
-  repository_url: z.string().url('Must be a valid GitHub repository URL'),
+  repository_url: z.string().url('Must be a valid Git repository URL'),
   question: z.string().min(1, 'Question cannot be empty'),
   branch: z.string().optional()
 });
@@ -20,14 +20,14 @@ interface ServerConfig {
 export function createAskRepositoryTool(): Tool {
   return {
     name: 'ask-repository',
-    description: 'Ask questions about any GitHub repository using AI code analysis',
+    description: 'Ask questions about any Git repository using AI code analysis. Supports GitHub, GitLab, and other Git hosting platforms with multiple URL formats (HTTPS, SSH, .git extensions)',
     inputSchema: {
       type: 'object',
       properties: {
         repository_url: {
           type: 'string',
           format: 'uri',
-          description: 'GitHub repository URL (e.g., https://github.com/owner/repo)'
+          description: 'Git repository URL. Supports multiple formats: GitHub URLs (https://github.com/owner/repo), Git URLs with .git extension (https://github.com/owner/repo.git), SSH URLs (git@github.com:owner/repo.git), and other Git repository URLs'
         },
         question: {
           type: 'string',

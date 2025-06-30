@@ -1,6 +1,6 @@
 # Git Ask MCP Server
 
-A Model Context Protocol (MCP) server that provides AI-powered code analysis for GitHub repositories.
+A Model Context Protocol (MCP) server that provides AI-powered code analysis for Git repositories.
 
 ## Overview
 
@@ -8,7 +8,7 @@ This MCP server acts as an adapter layer between MCP clients (like Claude Deskto
 
 ## Features
 
-- **Repository Analysis**: Ask questions about any GitHub repository
+- **Repository Analysis**: Ask questions about any Git repository (GitHub, GitLab, etc.)
 - **MCP Protocol Compliance**: Full compatibility with MCP-enabled clients
 - **Easy Installation**: One-command setup via npx
 - **TypeScript Support**: Built with TypeScript for reliability
@@ -58,7 +58,11 @@ Add to your Claude Desktop configuration:
 
 Once configured with your MCP client, you can use the `ask-repository` tool:
 
-- **Repository URL**: GitHub repository URL (e.g., https://github.com/owner/repo)
+- **Repository URL**: Git repository URL supporting multiple formats:
+  - GitHub HTTPS: `https://github.com/owner/repo`
+  - GitHub HTTPS with .git: `https://github.com/owner/repo.git`  
+  - GitHub SSH: `git@github.com:owner/repo.git`
+  - Other Git repositories: `https://gitlab.com/owner/repo.git`
 - **Question**: Your question about the repository
 - **Branch**: Optional branch to analyze (default: main/master)
 

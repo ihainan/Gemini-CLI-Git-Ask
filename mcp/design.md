@@ -38,7 +38,7 @@ This MCP (Model Context Protocol) server provides a standardized interface for A
 
 **Name**: `ask-repository`
 **Title**: Ask Repository Question
-**Description**: Ask questions about any GitHub repository using AI code analysis
+**Description**: Ask questions about any Git repository using AI code analysis. Supports GitHub, GitLab, and other Git hosting platforms with multiple URL formats including HTTPS and SSH.
 
 **Input Schema**:
 ```json
@@ -46,7 +46,13 @@ This MCP (Model Context Protocol) server provides a standardized interface for A
   "repository_url": {
     "type": "string",
     "format": "uri",
-    "description": "GitHub repository URL (e.g., https://github.com/owner/repo)"
+    "description": "Git repository URL supporting multiple formats",
+    "examples": [
+      "https://github.com/owner/repo",
+      "https://github.com/owner/repo.git", 
+      "git@github.com:owner/repo.git",
+      "https://gitlab.com/owner/repo.git"
+    ]
   },
   "question": {
     "type": "string", 
@@ -424,7 +430,7 @@ tests/
 
 ### 11.1 Input Validation
 
-- **URL Validation**: Validate GitHub repository URLs
+- **URL Validation**: Validate Git repository URLs (GitHub, GitLab, etc.)
 - **Parameter Sanitization**: Sanitize all user inputs
 - **Schema Validation**: Use Zod for strict type checking
 - **Injection Prevention**: Prevent command injection attacks
@@ -480,7 +486,7 @@ tests/
 
 **Required Services**:
 - Git Ask Service (HTTP API)
-- Network connectivity to GitHub repositories
+- Network connectivity to Git repositories (GitHub, GitLab, etc.)
 - Node.js runtime environment (18+)
 
 **Optional Services**:
