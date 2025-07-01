@@ -638,117 +638,117 @@
             onerror="this.onerror=null; this.src='https://unpkg.com/marked@16.0.0/lib/marked.umd.min.js'"></script>
     
     <script>
-        // Example data with targeted questions for each project
+        // Example data with deep source code analysis questions for each project
         const examples = {
             'https://github.com/microsoft/vscode': [
-                'How do I create and publish a VS Code extension?',
-                'What are the key APIs available for VS Code extension development?',
-                'How does VS Code handle language servers and LSP protocol?',
-                'What is the architecture of VS Code\'s editor and workbench?',
-                'How to debug VS Code extensions during development?',
-                'VS Code 如何实现语法高亮和代码补全功能？',
-                '如何为 VS Code 开发自定义主题？',
-                'VS Code 的插件市场是如何工作的？'
+                'How is the Monaco Editor integrated with VS Code workbench? Analyze the code structure.',
+                'What is the implementation of VS Code\'s extensionHost process and message passing?',
+                'How does VS Code implement tree-shaking for extension bundles in the source code?',
+                'Analyze the TextModel class implementation and how it handles large file editing.',
+                'How is the language server proxy implemented in the VS Code source?',
+                'VS Code 的 IPC 通信机制在源码中是如何实现的？',
+                '分析 VS Code 编辑器的撤销/重做系统源码实现',
+                'VS Code 的文件监控系统源码是如何优化性能的？'
             ],
             'https://github.com/facebook/react': [
-                'What are React Hooks and how do they work internally?',
-                'How does React\'s Virtual DOM reconciliation algorithm work?',
-                'What is the difference between React.memo and useMemo?',
-                'How does React\'s Fiber architecture improve performance?',
-                'What are the best practices for React component composition?',
-                'React 18 的并发特性是如何实现的？',
-                'React 中的状态管理有哪些最佳实践？',
-                'React 的服务端渲染是如何工作的？'
+                'How is the Fiber reconciler\'s work loop implemented in the source code?',
+                'Analyze the useState hook implementation and state batching mechanism.',
+                'How does React implement time slicing in the scheduler source code?',
+                'What is the exact implementation of React\'s synthetic event system?',
+                'How is component re-rendering optimized in React\'s source code?',
+                'React 的 Concurrent Mode 在源码中是如何调度任务的？',
+                '分析 React.createElement 的源码实现和性能优化',
+                'useEffect 的清理机制在源码中是如何实现的？'
             ],
             'https://github.com/vuejs/vue': [
-                'How does Vue\'s reactivity system work under the hood?',
-                'What is the difference between Options API and Composition API?',
-                'How does Vue\'s template compilation process work?',
-                'What are Vue directives and how to create custom ones?',
-                'How does Vue handle component lifecycle and optimization?',
-                'Vue 3 相比 Vue 2 有哪些重大改进？',
-                'Vue 的单文件组件是如何编译的？',
-                'Vue 生态系统中的状态管理方案有哪些？'
+                'How is Vue\'s reactivity system implemented using Proxy in Vue 3 source code?',
+                'Analyze the virtual DOM patching algorithm implementation in Vue.',
+                'How does Vue\'s compiler transform template syntax in the source code?',
+                'What is the implementation of Vue\'s composition API reactivity tracking?',
+                'How is component instance creation and lifecycle managed in Vue source?',
+                'Vue 3 的响应式系统中 ref 和 reactive 的源码区别是什么？',
+                '分析 Vue 编译器如何处理 slot 语法的源码实现',
+                'Vue 的异步组件加载机制在源码中是如何实现的？'
             ],
             'https://github.com/angular/angular': [
-                'How does Angular\'s dependency injection system work?',
-                'What are Angular decorators and how do they function?',
-                'How does Angular\'s change detection mechanism work?',
-                'What is the Angular CLI and how does it generate code?',
-                'How to implement lazy loading in Angular applications?',
-                'Angular 的响应式表单是如何实现的？',
-                'Angular 中的服务和模块是如何协作的？',
-                'Angular 的测试框架和策略是什么？'
+                'How is Angular\'s hierarchical dependency injector implemented in the source?',
+                'Analyze the Zone.js integration and change detection trigger mechanism.',
+                'How does Angular\'s template compiler generate component factories?',
+                'What is the implementation of Angular\'s tree-shaking and dead code elimination?',
+                'How is the Angular router\'s lazy loading mechanism implemented?',
+                'Angular 的装饰器元数据在编译时是如何处理的？',
+                '分析 Angular 表单验证器的源码实现机制',
+                'Angular 的服务注入作用域在源码中是如何管理的？'
             ],
             'https://github.com/nodejs/node': [
-                'How does Node.js event loop work internally?',
-                'What is the difference between process.nextTick and setImmediate?',
-                'How does Node.js handle asynchronous I/O operations?',
-                'What are Node.js streams and how do they work?',
-                'How does Node.js module system and require() work?',
-                'Node.js 的内存管理和垃圾回收机制是怎样的？',
-                'Node.js 中如何处理错误和异常？',
-                'Node.js 的集群模式是如何实现的？' 
+                'How is the libuv event loop integrated with V8 in Node.js source code?',
+                'Analyze the implementation of Node.js stream backpressure handling.',
+                'How does Node.js implement module caching and circular dependency resolution?',
+                'What is the source code implementation of Worker Threads communication?',
+                'How is memory management optimized in Node.js Buffer implementation?',
+                'Node.js 的 cluster 模块在源码中是如何实现负载均衡的？',
+                '分析 Node.js 异步 I/O 操作的源码调度机制',
+                'Node.js 的垃圾回收统计是如何在源码中实现的？'
             ],
             'https://github.com/django/django': [
-                'How does Django\'s ORM query optimization work?',
-                'What is Django\'s MVT architecture and how does it differ from MVC?',
-                'How does Django handle database migrations and schema changes?',
-                'What are Django signals and when should they be used?',
-                'How does Django\'s authentication and authorization system work?',
-                'Django 的中间件机制是如何实现的？',
-                'Django 中如何实现数据库事务管理？',
-                'Django 的模板引擎有哪些特性和优化？'
+                'How is Django\'s ORM query compiler implemented for SQL generation?',
+                'Analyze the implementation of Django\'s middleware stack and request processing.',
+                'How does Django implement database connection pooling and transaction management?',
+                'What is the source code implementation of Django\'s template engine caching?',
+                'How is Django\'s migration framework\'s dependency resolution implemented?',
+                'Django 的信号机制在源码中是如何避免循环依赖的？',
+                '分析 Django ORM 中 lazy loading 的源码实现',
+                'Django 的认证后端在源码中是如何插件化实现的？'
             ],
             'https://github.com/kubernetes/kubernetes': [
-                'How does Kubernetes scheduler decide pod placement?',
-                'What is the architecture of Kubernetes control plane?',
-                'How do Kubernetes controllers and operators work?',
-                'What are Kubernetes Custom Resource Definitions (CRDs)?',
-                'How does Kubernetes handle service discovery and networking?',
-                'Kubernetes 的存储抽象和持久化是如何实现的？',
-                'Kubernetes 中的自动扩缩容机制是怎样的？',
-                'Kubernetes 的安全模型和 RBAC 是如何工作的？'
+                'How is the Kubernetes scheduler\'s scoring algorithm implemented in the source?',
+                'Analyze the etcd watch mechanism integration in Kubernetes controllers.',
+                'How does Kubernetes implement leader election for high availability?',
+                'What is the source code implementation of pod admission controllers?',
+                'How is the kubelet\'s container runtime interface (CRI) implemented?',
+                'Kubernetes 的资源配额控制器源码是如何实现限制检查的？',
+                '分析 Kubernetes 网络策略的源码实现机制',
+                'Kubernetes 的垃圾收集器在源码中是如何处理级联删除的？'
             ],
             'https://github.com/docker/docker-ce': [
-                'How does Docker\'s layered filesystem work?',
-                'What is the difference between Docker images and containers?',
-                'How does Docker implement container isolation and security?',
-                'What are Docker networks and how do they work?',
-                'How does Docker handle resource management and limits?',
-                'Docker 的镜像构建过程是怎样的？',
-                'Docker 容器的生命周期管理是如何实现的？',
-                'Docker 与虚拟机相比有哪些优势和劣势？'
+                'How is Docker\'s copy-on-write filesystem layer implemented in the source?',
+                'Analyze the container runtime (runc) integration in Docker source code.',
+                'How does Docker implement namespace isolation in the containerization code?',
+                'What is the source code implementation of Docker\'s image manifest handling?',
+                'How is Docker\'s logging driver architecture implemented?',
+                'Docker 的网络驱动在源码中是如何实现插件化的？',
+                '分析 Docker 镜像层缓存机制的源码实现',
+                'Docker 的 cgroup 资源限制在源码中是如何精确控制的？'
             ],
             'https://github.com/tensorflow/tensorflow': [
-                'How does TensorFlow\'s automatic differentiation work?',
-                'What is the difference between TensorFlow 1.x and 2.x execution models?',
-                'How does TensorFlow handle distributed training across multiple GPUs?',
-                'What are TensorFlow operations and how are they optimized?',
-                'How does TensorFlow\'s SavedModel format work?',
-                'TensorFlow 的计算图是如何构建和优化的？',
-                '如何在 TensorFlow 中实现自定义操作和层？',
-                'TensorFlow 的模型部署策略有哪些？'
+                'How is TensorFlow\'s automatic differentiation tape implemented in the source?',
+                'Analyze the kernel dispatching mechanism for different device types.',
+                'How does TensorFlow implement memory optimization for large models?',
+                'What is the source code implementation of TensorFlow\'s graph optimization passes?',
+                'How is distributed training coordination implemented in TensorFlow source?',
+                'TensorFlow 的算子融合优化在源码中是如何实现的？',
+                '分析 TensorFlow 动态图执行引擎的源码机制',
+                'TensorFlow 的检查点保存机制在源码中是如何处理大模型的？'
             ],
             'https://github.com/pytorch/pytorch': [
-                'How does PyTorch\'s dynamic computation graph work?',
-                'What is the difference between PyTorch tensors and NumPy arrays?',
-                'How does PyTorch implement automatic gradient computation?',
-                'What are PyTorch DataLoaders and how do they optimize data loading?',
-                'How does PyTorch handle GPU memory management?',
-                'PyTorch 的模型保存和加载机制是怎样的？',
-                'PyTorch 中如何实现自定义损失函数？',
-                'PyTorch 的分布式训练是如何实现的？'
+                'How is PyTorch\'s autograd engine implemented for dynamic computation graphs?',
+                'Analyze the ATen tensor library\'s operator dispatching mechanism.',
+                'How does PyTorch implement memory pooling for GPU tensors?',
+                'What is the source code implementation of PyTorch\'s JIT compiler?',
+                'How is PyTorch\'s distributed data parallel training synchronized?',
+                'PyTorch 的延迟执行机制在源码中是如何实现的？',
+                '分析 PyTorch 自定义 C++ 扩展的源码集成方式',
+                'PyTorch 的模型量化在源码中是如何实现精度控制的？'
             ],
             'https://github.com/google-gemini/gemini-cli': [
-                'How does this CLI tool integrate with the Gemini API?',
-                'What authentication methods does this tool support?',
-                'How does the tool handle different input formats and models?',
-                'What are the key configuration options for the Gemini CLI?',
-                'How does the tool manage API rate limits and errors?',
-                '这个 CLI 工具支持哪些 Gemini 模型？',
-                '如何配置和使用这个命令行工具？',
-                '这个工具的主要使用场景和优势是什么？'
+                'How is the CLI argument parsing and validation implemented in the source code?',
+                'Analyze the API client authentication flow implementation.',
+                'How does the tool handle streaming responses from the Gemini API?',
+                'What is the implementation of configuration file parsing and merging?',
+                'How is error handling and retry logic implemented in the source?',
+                '这个 CLI 工具的插件系统在源码中是如何设计的？',
+                '分析工具的并发请求处理机制源码实现',
+                '源码中是如何实现不同输出格式的序列化的？'
             ]
         };
 
