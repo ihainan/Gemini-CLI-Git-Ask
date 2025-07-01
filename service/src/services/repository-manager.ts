@@ -253,11 +253,25 @@ export class RepositoryManager {
       return await this.cloneRepository(url, branch);
     }
 
-    // Update access time
-    await this.updateAccessTime(repoInfo.localPath);
-    
-    // Check if update is needed
+    // Auto-repair missing metadata file
+    if (!repoInfo.metadata) {
+      logger.warn(`Repository exists but metadata is missing: ${repoInfo.localPath}. Attempting to repair...`);
+      try {
+        const repairedMetadata = await this.repairRepositoryMetadata(repoInfo.localPath, repoInfo.url, repoInfo.branch);
+        repoInfo.metadata = repairedMetadata;
+        logger.info(`Successfully repaired metadata for repository: ${repoInfo.localPath}`);
+      } catch (error) {
+        logger.error(`Failed to repair repository metadata: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        // Continue without metadata instead of throwing error
+        logger.warn(`Continuing without metadata for repository: ${repoInfo.localPath}`);
+      }
+    }
+
+    // Update access time if metadata is available
     if (repoInfo.metadata) {
+      await this.updateAccessTime(repoInfo.localPath);
+      
+      // Check if update is needed
       const lastUpdated = new Date(repoInfo.metadata.last_updated);
       const hoursSinceUpdate = (Date.now() - lastUpdated.getTime()) / (1000 * 60 * 60);
       
@@ -573,6 +587,71 @@ export class RepositoryManager {
       await this.saveRepositoryMetadata(localPath, metadata);
     } catch (error) {
       logger.warn(`Failed to update access time for ${localPath}:`, error);
+    }
+  }
+
+  /**
+   * Repair missing repository metadata file
+   * Extract information from Git repository and regenerate metadata
+   */
+  private async repairRepositoryMetadata(localPath: string, originalUrl: string, expectedBranch: string): Promise<RepositoryMetadata> {
+    try {
+      const git = simpleGit(localPath);
+      
+      // Get current branch
+      let actualBranch: string;
+      try {
+        const status = await git.status();
+        actualBranch = status.current || expectedBranch;
+      } catch (error) {
+        logger.warn(`Failed to get current branch, using expected branch: ${expectedBranch}`);
+        actualBranch = expectedBranch;
+      }
+      
+      // Get current commit hash
+      let commitHash: string;
+      try {
+        const log = await git.log(['-n', '1']);
+        commitHash = log.latest?.hash || 'unknown';
+      } catch (error) {
+        logger.warn(`Failed to get commit hash: ${error}`);
+        commitHash = 'unknown';
+      }
+      
+      // Try to get remote URL
+      let remoteUrl: string;
+      try {
+        const remotes = await git.getRemotes(true);
+        const origin = remotes.find(remote => remote.name === 'origin');
+        remoteUrl = origin?.refs?.fetch || originalUrl;
+      } catch (error) {
+        logger.warn(`Failed to get remote URL, using original: ${originalUrl}`);
+        remoteUrl = originalUrl;
+      }
+      
+      // Create new metadata
+      const now = new Date().toISOString();
+      const metadata: RepositoryMetadata = {
+        url: remoteUrl,
+        branch: actualBranch,
+        last_updated: now,
+        last_accessed: now,
+        commit_hash: commitHash,
+        clone_method: this.config.cloneMethod
+      };
+      
+      // Save metadata file
+      await this.saveRepositoryMetadata(localPath, metadata);
+      
+      logger.info(`Repaired metadata for repository: ${localPath} (url: ${remoteUrl}, branch: ${actualBranch}, commit: ${commitHash})`);
+      return metadata;
+      
+    } catch (error) {
+      throw new RepositoryException(
+        RepositoryError.METADATA_ERROR,
+        `Failed to repair repository metadata: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { localPath, originalUrl, expectedBranch, error }
+      );
     }
   }
 

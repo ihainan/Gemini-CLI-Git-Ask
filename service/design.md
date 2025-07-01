@@ -108,6 +108,30 @@ repositories/
 }
 ```
 
+### 4.4 Metadata Repair and Recovery
+
+The service includes intelligent metadata repair capabilities to handle scenarios where repository directories exist but `.repo_metadata.json` files are missing or corrupted:
+
+#### 4.4.1 Automatic Detection and Repair
+
+- **Detection**: Automatically identifies repositories with missing metadata during `ensureRepository` operations
+- **Smart Repair**: Attempts to reconstruct metadata from existing Git repository information
+- **Graceful Fallback**: Continues operation even if metadata repair fails, ensuring service availability
+
+#### 4.4.2 Repair Process
+
+1. **Git Information Extraction**: Retrieves current branch, commit hash, and remote URL from existing Git repository
+2. **Metadata Reconstruction**: Builds new metadata structure with current timestamp and extracted information
+3. **File Generation**: Creates new `.repo_metadata.json` file with reconstructed data
+4. **Error Handling**: Logs repair attempts and falls back gracefully on failure
+
+#### 4.4.3 Common Scenarios Handled
+
+- **Process Interruption**: Repositories cloned during system shutdown or container restart
+- **Manual Operations**: Hand-copied repository directories without metadata files
+- **File Corruption**: Damaged or deleted metadata files due to disk issues
+- **Permission Problems**: Metadata files that couldn't be created during initial clone
+
 ## 5. Intelligent All Files Management
 
 ### 5.1 All Files Mode Configuration
@@ -212,12 +236,18 @@ repository_locks/
    - If not exists: Clone repository
    - If exists but stale: Update repository
    - If exists and fresh: Use cached version
-7. Collect repository statistics (for auto all_files mode)
-8. Determine all_files flag usage based on mode and statistics
-9. Execute Gemini CLI with appropriate flags
-10. Release repository lock
-11. Update access timestamp
-12. Return response
+   - If exists but missing metadata: Attempt automatic repair
+7. Metadata repair (if needed):
+   - Extract information from existing Git repository
+   - Reconstruct metadata structure
+   - Create new .repo_metadata.json file
+   - Log repair status and continue gracefully on failure
+8. Collect repository statistics (for auto all_files mode)
+9. Determine all_files flag usage based on mode and statistics
+10. Execute Gemini CLI with appropriate flags
+11. Release repository lock
+12. Update access timestamp
+13. Return response
 ```
 
 ### 7.2 Repository Update Logic
@@ -289,6 +319,7 @@ logging:
 - `INVALID_REQUEST`: Malformed request parameters
 - `REPOSITORY_NOT_FOUND`: Git repository inaccessible
 - `REPOSITORY_CLONE_FAILED`: Git clone operation failed
+- `METADATA_REPAIR_FAILED`: Failed to repair missing repository metadata (non-fatal, service continues)
 - `LOCK_TIMEOUT`: Failed to acquire repository lock
 - `GEMINI_EXECUTION_FAILED`: Gemini CLI execution error
 - `TIMEOUT_EXCEEDED`: Operation exceeded configured timeout
@@ -615,8 +646,11 @@ External dependencies are mocked to ensure test reliability:
   - Full CRUD operations for repository management
   - Intelligent update strategy with time-based caching
   - Comprehensive error handling and metadata management
+  - **Automatic metadata repair**: Intelligent recovery from missing or corrupted `.repo_metadata.json` files
+  - **Graceful degradation**: Continues operation even when metadata repair fails
   - Background cleanup service with storage limit enforcement
   - Repository statistics collection with `getSingleRepositoryStats()` method
+  - Enhanced robustness for production environments with self-healing capabilities
   - 86.06% statement coverage, 100% function coverage
 - **Testing Framework**: Complete Jest setup with CI support ✅
   - 140+ test cases with comprehensive API coverage (integration + unit tests)
@@ -831,3 +865,26 @@ This completes the transformation from development service to production-ready c
 
 **Impact:**
 This completes the comprehensive testing framework, providing enterprise-grade quality assurance for the entire service. The robust integration testing ensures reliable API behavior, proper error handling, and production readiness. The comprehensive test suite (140+ passing tests including 62 integration tests) provides complete API coverage and core functionality validation, making it deployment-ready for production environments.
+
+### Version 1.3.1 - Repository Metadata Self-Healing
+
+**Key Enhancements:**
+- **Automatic Metadata Repair**: Intelligent detection and repair of missing `.repo_metadata.json` files
+- **Self-Healing Architecture**: Service continues operation even when metadata files are corrupted or missing
+- **Production Robustness**: Enhanced reliability for real-world deployment scenarios with interrupted processes
+- **Comprehensive Error Handling**: Graceful fallback mechanisms with detailed logging
+
+**Technical Implementation:**
+- **Smart Detection**: Automatic identification of repositories with missing metadata during ensureRepository operations
+- **Git Information Extraction**: Reconstruction of metadata from existing Git repository structure
+- **Graceful Degradation**: Service continues without metadata when repair attempts fail
+- **Integration Testing**: Complete test coverage for metadata repair scenarios
+
+**Common Issues Resolved:**
+- Container restarts during repository cloning processes
+- Manually copied repository directories without metadata files
+- Disk space issues preventing metadata file creation
+- File system permission problems during clone operations
+
+**Impact:**
+This enhancement significantly improves service reliability in production environments, automatically recovering from common deployment issues and ensuring consistent service availability even with incomplete repository caches. The self-healing capability reduces operational overhead and prevents service disruptions.

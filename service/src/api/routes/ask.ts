@@ -58,13 +58,17 @@ export class AskController {
         askRequest.branch
       );
       
-      if (!repositoryInfo.exists || !repositoryInfo.metadata) {
+      if (!repositoryInfo.exists) {
         throw new ApiException(
           ApiErrorCode.REPOSITORY_NOT_FOUND,
           'Failed to prepare repository for analysis',
           { repository_url: askRequest.repository_url },
           500
         );
+      }
+      
+      if (!repositoryInfo.metadata) {
+        logger.warn(`Repository exists but has no metadata, continuing with limited information: ${repositoryInfo.localPath}`);
       }
       
       logger.info(`Repository prepared successfully: ${repositoryInfo.localPath}`);
@@ -96,9 +100,9 @@ export class AskController {
         status: 'success',
         answer: geminiResponse.answer,
         repository: {
-          url: repositoryInfo.metadata.url,
-          branch: repositoryInfo.metadata.branch,
-          commit_hash: repositoryInfo.metadata.commit_hash
+          url: repositoryInfo.metadata?.url || repositoryInfo.url,
+          branch: repositoryInfo.metadata?.branch || repositoryInfo.branch,
+          commit_hash: repositoryInfo.metadata?.commit_hash || 'unknown'
         },
         execution_time: totalExecutionTime
       };

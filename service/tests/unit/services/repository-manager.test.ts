@@ -296,6 +296,20 @@ describe('RepositoryManager', () => {
       expect(result.exists).toBe(true);
       expect(mockFs.writeFile).toHaveBeenCalled(); // For updating access time
     });
+
+    it('should continue gracefully when metadata is missing', async () => {
+      // Mock repository exists but metadata file is missing
+      mockFs.access.mockResolvedValue(undefined);
+      mockFs.readFile.mockRejectedValue(new Error('ENOENT: no such file'));
+
+      const result = await repositoryManager.ensureRepository('https://github.com/test/repo');
+
+      expect(result.exists).toBe(true);
+      // Should return repository info even without metadata
+      expect(result.url).toBe('https://github.com/test/repo');
+      expect(result.branch).toBe('main');
+      expect(result.localPath).toContain('test_repo_main_');
+    });
   });
 
   describe('getRepositoryStats', () => {

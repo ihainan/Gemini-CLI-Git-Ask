@@ -1,6 +1,6 @@
 {
   "name": "git-ask-mcp-server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MCP Server for Git Repository Code Analysis",
   "type": "module",
   "main": "dist/index.js",
