@@ -310,6 +310,290 @@
             margin: 16px 0;
         }
 
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .container {
+                max-width: 90%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                max-width: 100%;
+                margin: 0;
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .header {
+                padding: 20px 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+                margin-bottom: 8px;
+            }
+
+            .header p {
+                font-size: 1em;
+            }
+
+            .form-container {
+                padding: 20px 15px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            .form-group label {
+                font-size: 1em;
+                margin-bottom: 6px;
+            }
+
+            .form-group input, .form-group textarea {
+                padding: 12px;
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+
+            .form-group textarea {
+                min-height: 100px;
+            }
+
+            .btn-ask {
+                width: 100%;
+                padding: 15px;
+                font-size: 16px;
+            }
+
+            .result-container {
+                padding: 20px 15px;
+                margin-top: 20px;
+            }
+
+            .result-title {
+                font-size: 1.2em;
+            }
+
+            .result-content {
+                font-size: 14px;
+            }
+
+            .result-content h1 {
+                font-size: 24px;
+                margin: 20px 0 12px 0;
+            }
+
+            .result-content h2 {
+                font-size: 20px;
+                margin: 16px 0 10px 0;
+            }
+
+            .result-content h3 {
+                font-size: 16px;
+                margin: 14px 0 8px 0;
+            }
+
+            .result-content pre {
+                padding: 12px;
+                font-size: 13px;
+                overflow-x: auto;
+            }
+
+            .result-content table {
+                font-size: 13px;
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+
+            .result-content th,
+            .result-content td {
+                padding: 6px 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .header p {
+                font-size: 0.9em;
+            }
+
+            .form-container {
+                padding: 15px 10px;
+            }
+
+            .form-group input, .form-group textarea {
+                padding: 10px;
+            }
+
+            .result-container {
+                padding: 15px 10px;
+            }
+
+            .result-content {
+                font-size: 13px;
+            }
+
+            .result-content h1 {
+                font-size: 20px;
+            }
+
+            .result-content h2 {
+                font-size: 18px;  
+            }
+
+            .result-content h3 {
+                font-size: 16px;
+            }
+
+            .result-content pre, .result-content code {
+                font-size: 12px;
+            }
+
+            .spinner {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        /* Desktop specific optimizations */
+        @media (min-width: 1024px) {
+            .container {
+                max-width: 900px;
+            }
+
+            .form-container {
+                padding: 50px;
+            }
+
+            .header {
+                padding: 40px 50px;
+            }
+
+            .form-group input, .form-group textarea {
+                font-size: 16px;
+            }
+
+            .btn-ask {
+                padding: 15px 40px;
+                font-size: 17px;
+            }
+
+            .result-container {
+                padding: 40px 50px;
+            }
+        }
+
+        /* Touch-friendly improvements */
+        @media (pointer: coarse) {
+            .btn-ask {
+                min-height: 48px;
+                padding: 15px 30px;
+            }
+
+            .form-group input, .form-group textarea {
+                min-height: 48px;
+            }
+        }
+
+        /* High-DPI screens */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .result-content img {
+                image-rendering: -webkit-optimize-contrast;
+                image-rendering: crisp-edges;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #1a1a1a;
+                color: #e5e5e5;
+            }
+
+            .container {
+                background: #2d2d2d;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            }
+
+            .header {
+                background: #1e40af;
+            }
+
+            .form-group input, .form-group textarea {
+                background: #404040;
+                border-color: #555;
+                color: #e5e5e5;
+            }
+
+            .form-group input:focus, .form-group textarea:focus {
+                border-color: #3b82f6;
+                background: #4a4a4a;
+            }
+
+            .form-group label {
+                color: #e5e5e5;
+            }
+
+            .result-container {
+                background: #333;
+                border-left-color: #3b82f6;
+            }
+
+            .result-title {
+                color: #e5e5e5;
+                border-bottom-color: #555;
+            }
+
+            .result-content {
+                color: #d1d5db;
+            }
+
+            .result-content h1, .result-content h2, .result-content h3 {
+                color: #f9fafb;
+                border-bottom-color: #555;
+            }
+
+            .result-content code {
+                background: #404040;
+                color: #fbbf24;
+                border-color: #555;
+            }
+
+            .result-content pre {
+                background: #1f2937;
+                border-color: #374151;
+                color: #e5e7eb;
+            }
+
+            .result-content blockquote {
+                background: #374151;
+                border-left-color: #3b82f6;
+                color: #d1d5db;
+            }
+
+            .result-content table th {
+                background: #374151;
+                color: #f9fafb;
+            }
+
+            .result-content table th, .result-content table td {
+                border-color: #555;
+            }
+
+            .result-content table tr:nth-child(even) {
+                background: #374151;
+            }
+        }
+
 
     </style>
 </head>
@@ -354,56 +638,179 @@
             onerror="this.onerror=null; this.src='https://unpkg.com/marked@16.0.0/lib/marked.umd.min.js'"></script>
     
     <script>
-        // Example data
+        // Example data with targeted questions for each project
         const examples = {
-            repos: [
-                'https://github.com/microsoft/vscode',
-                'https://github.com/facebook/react',
-                'https://github.com/vuejs/vue',
-                'https://github.com/angular/angular',
-                'https://github.com/nodejs/node',
-                'https://github.com/django/django',
-                'https://github.com/kubernetes/kubernetes',
-                'https://github.com/docker/docker-ce',
-                'https://github.com/tensorflow/tensorflow',
-                'https://github.com/pytorch/pytorch'
+            'https://github.com/microsoft/vscode': [
+                'How do I create and publish a VS Code extension?',
+                'What are the key APIs available for VS Code extension development?',
+                'How does VS Code handle language servers and LSP protocol?',
+                'What is the architecture of VS Code\'s editor and workbench?',
+                'How to debug VS Code extensions during development?',
+                'VS Code 如何实现语法高亮和代码补全功能？',
+                '如何为 VS Code 开发自定义主题？',
+                'VS Code 的插件市场是如何工作的？'
             ],
-            questions: [
-                'What is this project about and what problem does it solve?',
-                'How do I get started with this project? What are the installation steps?',
-                'What are the main features and capabilities of this project?',
-                'What is the architecture of this project? How is the code organized?',
-                'How can I contribute to this project? What is the contribution process?',
-                'What are the most important files in this repository?',
-                'What technologies and frameworks does this project use?',
-                'Are there any recent major changes or updates to this project?',
-                'What are the common issues or problems users face with this project?',
-                'How does this project compare to similar alternatives?'
+            'https://github.com/facebook/react': [
+                'What are React Hooks and how do they work internally?',
+                'How does React\'s Virtual DOM reconciliation algorithm work?',
+                'What is the difference between React.memo and useMemo?',
+                'How does React\'s Fiber architecture improve performance?',
+                'What are the best practices for React component composition?',
+                'React 18 的并发特性是如何实现的？',
+                'React 中的状态管理有哪些最佳实践？',
+                'React 的服务端渲染是如何工作的？'
+            ],
+            'https://github.com/vuejs/vue': [
+                'How does Vue\'s reactivity system work under the hood?',
+                'What is the difference between Options API and Composition API?',
+                'How does Vue\'s template compilation process work?',
+                'What are Vue directives and how to create custom ones?',
+                'How does Vue handle component lifecycle and optimization?',
+                'Vue 3 相比 Vue 2 有哪些重大改进？',
+                'Vue 的单文件组件是如何编译的？',
+                'Vue 生态系统中的状态管理方案有哪些？'
+            ],
+            'https://github.com/angular/angular': [
+                'How does Angular\'s dependency injection system work?',
+                'What are Angular decorators and how do they function?',
+                'How does Angular\'s change detection mechanism work?',
+                'What is the Angular CLI and how does it generate code?',
+                'How to implement lazy loading in Angular applications?',
+                'Angular 的响应式表单是如何实现的？',
+                'Angular 中的服务和模块是如何协作的？',
+                'Angular 的测试框架和策略是什么？'
+            ],
+            'https://github.com/nodejs/node': [
+                'How does Node.js event loop work internally?',
+                'What is the difference between process.nextTick and setImmediate?',
+                'How does Node.js handle asynchronous I/O operations?',
+                'What are Node.js streams and how do they work?',
+                'How does Node.js module system and require() work?',
+                'Node.js 的内存管理和垃圾回收机制是怎样的？',
+                'Node.js 中如何处理错误和异常？',
+                'Node.js 的集群模式是如何实现的？' 
+            ],
+            'https://github.com/django/django': [
+                'How does Django\'s ORM query optimization work?',
+                'What is Django\'s MVT architecture and how does it differ from MVC?',
+                'How does Django handle database migrations and schema changes?',
+                'What are Django signals and when should they be used?',
+                'How does Django\'s authentication and authorization system work?',
+                'Django 的中间件机制是如何实现的？',
+                'Django 中如何实现数据库事务管理？',
+                'Django 的模板引擎有哪些特性和优化？'
+            ],
+            'https://github.com/kubernetes/kubernetes': [
+                'How does Kubernetes scheduler decide pod placement?',
+                'What is the architecture of Kubernetes control plane?',
+                'How do Kubernetes controllers and operators work?',
+                'What are Kubernetes Custom Resource Definitions (CRDs)?',
+                'How does Kubernetes handle service discovery and networking?',
+                'Kubernetes 的存储抽象和持久化是如何实现的？',
+                'Kubernetes 中的自动扩缩容机制是怎样的？',
+                'Kubernetes 的安全模型和 RBAC 是如何工作的？'
+            ],
+            'https://github.com/docker/docker-ce': [
+                'How does Docker\'s layered filesystem work?',
+                'What is the difference between Docker images and containers?',
+                'How does Docker implement container isolation and security?',
+                'What are Docker networks and how do they work?',
+                'How does Docker handle resource management and limits?',
+                'Docker 的镜像构建过程是怎样的？',
+                'Docker 容器的生命周期管理是如何实现的？',
+                'Docker 与虚拟机相比有哪些优势和劣势？'
+            ],
+            'https://github.com/tensorflow/tensorflow': [
+                'How does TensorFlow\'s automatic differentiation work?',
+                'What is the difference between TensorFlow 1.x and 2.x execution models?',
+                'How does TensorFlow handle distributed training across multiple GPUs?',
+                'What are TensorFlow operations and how are they optimized?',
+                'How does TensorFlow\'s SavedModel format work?',
+                'TensorFlow 的计算图是如何构建和优化的？',
+                '如何在 TensorFlow 中实现自定义操作和层？',
+                'TensorFlow 的模型部署策略有哪些？'
+            ],
+            'https://github.com/pytorch/pytorch': [
+                'How does PyTorch\'s dynamic computation graph work?',
+                'What is the difference between PyTorch tensors and NumPy arrays?',
+                'How does PyTorch implement automatic gradient computation?',
+                'What are PyTorch DataLoaders and how do they optimize data loading?',
+                'How does PyTorch handle GPU memory management?',
+                'PyTorch 的模型保存和加载机制是怎样的？',
+                'PyTorch 中如何实现自定义损失函数？',
+                'PyTorch 的分布式训练是如何实现的？'
+            ],
+            'https://github.com/google-gemini/gemini-cli': [
+                'How does this CLI tool integrate with the Gemini API?',
+                'What authentication methods does this tool support?',
+                'How does the tool handle different input formats and models?',
+                'What are the key configuration options for the Gemini CLI?',
+                'How does the tool manage API rate limits and errors?',
+                '这个 CLI 工具支持哪些 Gemini 模型？',
+                '如何配置和使用这个命令行工具？',
+                '这个工具的主要使用场景和优势是什么？'
             ]
         };
 
-        function getRandomExample(type) {
-            const list = examples[type];
-            return list[Math.floor(Math.random() * list.length)];
+        function getRandomRepo() {
+            const repos = Object.keys(examples);
+            return repos[Math.floor(Math.random() * repos.length)];
+        }
+
+        function getRandomQuestionForRepo(repoUrl) {
+            const questions = examples[repoUrl];
+            if (questions && questions.length > 0) {
+                return questions[Math.floor(Math.random() * questions.length)];
+            }
+            // Fallback to a generic question if repo not found
+            return 'What is this project about and what problem does it solve?';
+        }
+
+        function updateQuestionForRepo(repoUrl) {
+            const questionField = document.getElementById('question');
+            if (!questionField.value || questionField.dataset.wasAutoFilled === 'true') {
+                questionField.value = getRandomQuestionForRepo(repoUrl);
+                questionField.dataset.wasAutoFilled = 'true';
+            }
         }
 
         // Set random examples when clicking input fields
         document.getElementById('repoUrl').addEventListener('focus', function() {
             if (!this.value) {
-                this.value = getRandomExample('repos');
+                this.value = getRandomRepo();
+                updateQuestionForRepo(this.value);
             }
         });
 
+        // Update question when repo URL changes
+        document.getElementById('repoUrl').addEventListener('change', function() {
+            updateQuestionForRepo(this.value);
+        });
+
+        document.getElementById('repoUrl').addEventListener('blur', function() {
+            updateQuestionForRepo(this.value);
+        });
+
         document.getElementById('question').addEventListener('focus', function() {
+            const repoUrl = document.getElementById('repoUrl').value;
             if (!this.value) {
-                this.value = getRandomExample('questions');
+                this.value = getRandomQuestionForRepo(repoUrl);
+                this.dataset.wasAutoFilled = 'true';
             }
+        });
+
+        document.getElementById('question').addEventListener('input', function() {
+            // Mark as user-edited when user types
+            this.dataset.wasAutoFilled = 'false';
         });
 
         // Set initial random examples
         window.addEventListener('load', function() {
-            document.getElementById('repoUrl').value = getRandomExample('repos');
-            document.getElementById('question').value = getRandomExample('questions');
+            const randomRepo = getRandomRepo();
+            document.getElementById('repoUrl').value = randomRepo;
+            const questionField = document.getElementById('question');
+            questionField.value = getRandomQuestionForRepo(randomRepo);
+            questionField.dataset.wasAutoFilled = 'true';
         });
 
         // Form submission
