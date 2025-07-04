@@ -10,7 +10,9 @@ import express from 'express';
 import { MockDataFactory, TestAPIHelper } from '../../helpers/test-utils';
 import { createTestApp } from '../../helpers/test-app';
 import { ApiErrorCode } from '../../../src/types';
-import { setMockExecResult, clearMockExecResults } from '../../__mocks__/child_process';
+
+// Import from CommonJS mock
+const { setMockExecResult, clearMockExecResults } = require('../../__mocks__/child_process');
 
 describe('POST /api/v1/ask', () => {
   let app: express.Application;

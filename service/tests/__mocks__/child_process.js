@@ -2,45 +2,29 @@
  * Mock implementation of child_process
  */
 
-import { EventEmitter } from 'events';
+const { EventEmitter } = require('events');
 
-export interface MockChildProcess extends EventEmitter {
-  stdout: EventEmitter;
-  stderr: EventEmitter;
-  stdin: {
-    write: jest.Mock;
-    end: jest.Mock;
-  };
-  kill: jest.Mock;
-  pid: number;
-  killed: boolean;
-}
+// Using JSDoc comments for type information since this is a JS file
 
-export interface MockExecResult {
-  stdout: string;
-  stderr: string;
-  error?: Error;
-}
-
-class MockChildProcessEmitter extends EventEmitter implements MockChildProcess {
-  stdout = new EventEmitter();
-  stderr = new EventEmitter();
-  stdin = {
-    write: jest.fn(),
-    end: jest.fn()
-  };
-  kill = jest.fn().mockImplementation((signal?: string) => {
-    this.killed = true;
-    return true;
-  });
-  pid = Math.floor(Math.random() * 10000) + 1000; // Ensure it's not 0
-  killed = false;
-
-  constructor(private result: MockExecResult) {
+class MockChildProcessEmitter extends EventEmitter {
+  constructor(result) {
     super();
+    this.result = result;
+    this.stdout = new EventEmitter();
+    this.stderr = new EventEmitter();
+    this.stdin = {
+      write: jest.fn(),
+      end: jest.fn()
+    };
+    this.kill = jest.fn().mockImplementation((signal) => {
+      this.killed = true;
+      return true;
+    });
+    this.pid = Math.floor(Math.random() * 10000) + 1000; // Ensure it's not 0
+    this.killed = false;
   }
 
-  simulateExecution(): void {
+  simulateExecution() {
     // Simulate async execution
     setTimeout(() => {
       // Always emit stdout and stderr data, even if empty
@@ -59,7 +43,7 @@ class MockChildProcessEmitter extends EventEmitter implements MockChildProcess {
   }
 
   // Add kill implementation to track killed state
-  killProcess(signal?: string): boolean {
+  killProcess(signal) {
     this.killed = true;
     this.kill(signal);
     return true;
@@ -67,20 +51,20 @@ class MockChildProcessEmitter extends EventEmitter implements MockChildProcess {
 }
 
 // Mock data storage
-const mockExecResults = new Map<string, MockExecResult>();
+const mockExecResults = new Map();
 
 // Set mock result for specific command
-export function setMockExecResult(command: string, result: MockExecResult): void {
+function setMockExecResult(command, result) {
   mockExecResults.set(command, result);
 }
 
 // Clear all mock results
-export function clearMockExecResults(): void {
+function clearMockExecResults() {
   mockExecResults.clear();
 }
 
 // Mock spawn function
-export const spawn = jest.fn().mockImplementation((command: string, args: string[] = []) => {
+const spawn = jest.fn().mockImplementation((command, args = []) => {
   const fullCommand = `${command} ${args.join(' ')}`.trim();
   
   console.log('Mock spawn called with:', fullCommand);
@@ -124,7 +108,7 @@ export const spawn = jest.fn().mockImplementation((command: string, args: string
 });
 
 // Mock exec function
-export const exec = jest.fn().mockImplementation((command: string, callback?: Function) => {
+const exec = jest.fn().mockImplementation((command, callback) => {
   let result = mockExecResults.get(command);
   
   // If no exact match found, provide default behavior based on command pattern
@@ -157,7 +141,7 @@ export const exec = jest.fn().mockImplementation((command: string, callback?: Fu
 });
 
 // Mock execSync function
-export const execSync = jest.fn().mockImplementation((command: string) => {
+const execSync = jest.fn().mockImplementation((command) => {
   const result = mockExecResults.get(command) || {
     stdout: 'Mock command executed successfully',
     stderr: ''
@@ -223,4 +207,14 @@ setMockExecResult('echo "Rate limit test" | gemini --model gemini-2.5-flash', {
   stdout: '',
   stderr: 'Error: API rate limit exceeded. Please try again later.',
   error: new Error('Command failed with exit code 429')
-}); 
+});
+
+// CommonJS exports
+module.exports = {
+  spawn,
+  exec,
+  execSync,
+  setMockExecResult,
+  clearMockExecResults,
+  MockChildProcessEmitter
+}; 

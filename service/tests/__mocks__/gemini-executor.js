@@ -2,12 +2,12 @@
  * Mock implementation of GeminiExecutor
  */
 
-export class MockGeminiExecutor {
-  constructor(config: any) {
+class MockGeminiExecutor {
+  constructor(config) {
     // Mock constructor - accept config but ignore it
   }
 
-  public async ask(request: any): Promise<any> {
+  async ask(request) {
     // Simple mock that succeeds by default
     // Individual tests can override this using jest.spyOn if they need failure scenarios
     return Promise.resolve({
@@ -18,18 +18,18 @@ export class MockGeminiExecutor {
     });
   }
 
-  public async checkAvailability(): Promise<boolean> {
+  async checkAvailability() {
     // Simple mock that returns true by default
     // Individual tests can override this using jest.spyOn if they need false scenarios
     return Promise.resolve(true);
   }
 
-  public async getVersion(): Promise<string> {
+  async getVersion() {
     // Mock version check
     return 'gemini version 1.0.0';
   }
 
-  public async checkHealth(): Promise<any> {
+  async checkHealth() {
     // Mock health check response
     return {
       available: true,
@@ -38,7 +38,7 @@ export class MockGeminiExecutor {
     };
   }
 
-  public async getSingleRepositoryStats(repositoryPath: string): Promise<any> {
+  async getSingleRepositoryStats(repositoryPath) {
     // Mock repository stats
     return {
       fileCount: 25,
@@ -48,6 +48,9 @@ export class MockGeminiExecutor {
   }
 }
 
-// Mock the GeminiExecutor class
-export const GeminiExecutor = MockGeminiExecutor;
+// CommonJS exports
+module.exports = {
+  MockGeminiExecutor,
+  GeminiExecutor: MockGeminiExecutor
+};
  

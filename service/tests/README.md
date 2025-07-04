@@ -48,14 +48,22 @@ tests/
 │       ├── gemini-executor.test.ts
 │       ├── lock-manager.test.ts
 │       └── cleanup-service.test.ts
-└── integration/                # Integration tests for API endpoints
-    ├── setup-integration.ts       # Integration test setup and mocking
-    ├── test-app.ts                # Test Express application factory
-    ├── metadata-repair.test.ts     # Repository metadata repair integration tests (2 tests)
-    └── api/
-        ├── ask-endpoint.test.ts    # Complete API endpoint tests (23 tests)
-        ├── health-endpoints.test.ts # Health/metrics endpoint tests (15 tests)
-        └── middleware.test.ts      # Middleware integration tests (22 tests)
+├── integration/                # Integration tests for API endpoints (with mocks)
+│   ├── setup-integration.ts       # Integration test setup and mocking
+│   ├── test-app.ts                # Test Express application factory
+│   ├── metadata-repair.test.ts     # Repository metadata repair integration tests (2 tests)
+│   └── api/
+│       ├── ask-endpoint.test.ts    # Complete API endpoint tests (23 tests)
+│       ├── health-endpoints.test.ts # Health/metrics endpoint tests (15 tests)
+│       └── middleware.test.ts      # Middleware integration tests (22 tests)
+└── real-integration/           # Real integration tests (with actual services)
+    ├── README.md                   # Real integration tests documentation
+    ├── setup-real-integration.ts  # Real test setup and environment checking
+    ├── global-setup.ts             # Global setup (CLI tool verification)
+    ├── global-teardown.ts          # Global cleanup
+    ├── gemini-cli.test.ts          # Real Gemini CLI tests
+    ├── repository-manager.test.ts  # Real repository operations tests
+    └── full-api.test.ts            # End-to-end API tests with real services
 ```
 
 ## 🛠️ Available Test Commands
@@ -69,6 +77,9 @@ tests/
 | `npm run test:integration` | Run only integration tests |
 | `npm run test:unit:watch` | Run unit tests in watch mode |
 | `npm run test:integration:watch` | Run integration tests in watch mode |
+| `npm run test:real-integration` | Run real integration tests (requires setup) |
+| `npm run test:real-integration:watch` | Run real integration tests in watch mode |
+| `npm run test:real-integration:setup` | Run real integration tests with setup script (recommended) |
 | `npm run test:silent` | Run tests with minimal output |
 | `npm run test:verbose` | Run tests with detailed output |
 | `npm run test:ci` | Run tests in CI environment with strict settings |
@@ -113,6 +124,47 @@ describe('POST /api/v1/ask', () => {
   });
 });
 ```
+
+### Real Integration Tests
+Real integration tests use actual external services and repositories:
+
+- **Purpose**: Validate end-to-end functionality with real APIs
+- **Scope**: Complete system with real GitHub repositories and Gemini CLI
+- **Location**: `tests/real-integration/`
+- **Focus**: Real API calls, actual repository cloning, performance validation
+- **Requirements**: Gemini CLI installed, network access, environment setup
+
+**Test Coverage:**
+- **Gemini CLI Tests**: 9 tests covering CLI availability, real AI queries, timeout handling
+- **Repository Manager Tests**: 11 tests covering real GitHub cloning, statistics, error handling
+- **Full API Tests**: 8 tests covering end-to-end API functionality with real services
+
+**Setup Options:**
+```bash
+# Option 1: Using setup script (recommended)
+npm run test:real-integration:setup
+
+# Option 2: Using environment variables
+export REAL_INTEGRATION_ENABLED=true
+npm run test:real-integration
+
+# Option 3: Using config file
+cp tests/real-integration/test.env.example tests/real-integration/test.env
+npm run test:real-integration:setup
+```
+
+**Configuration:**
+```bash
+# Required
+REAL_INTEGRATION_ENABLED=true
+
+# Optional
+GEMINI_MODEL=gemini-2.5-flash    # default model
+TEST_TIMEOUT=120000              # timeout in ms
+REAL_INTEGRATION_CLEANUP=true    # cleanup after tests
+```
+
+**Note**: Uses local Gemini CLI, no API key required.
 
 ### Type Definition Tests
 Type definition tests ensure type safety and validate enum values:

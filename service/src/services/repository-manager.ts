@@ -129,6 +129,11 @@ export class RepositoryManager {
         }
       }
       
+      // Verify that the repository was actually cloned
+      if (!await this.checkRepositoryExists(repoInfo.localPath)) {
+        throw new Error(`Repository clone verification failed: .git directory not found in ${repoInfo.localPath}`);
+      }
+
       // Get initial commit hash
       const repoGit = simpleGit(repoInfo.localPath);
       const log = await repoGit.log(['-n', '1']);
@@ -569,6 +574,9 @@ export class RepositoryManager {
 
   private async saveRepositoryMetadata(localPath: string, metadata: RepositoryMetadata): Promise<void> {
     try {
+      // Ensure the directory exists before saving metadata
+      await fs.mkdir(localPath, { recursive: true });
+      
       const metadataPath = path.join(localPath, this.metadataFileName);
       await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2), 'utf-8');
     } catch (error) {

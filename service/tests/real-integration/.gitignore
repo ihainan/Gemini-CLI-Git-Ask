@@ -1,0 +1,8 @@
+# Ignore actual test configuration files
+test.env
+*.env
+!test.env.example
+
+# Ignore test output and temporary files
+test-results/
+test-output/ 

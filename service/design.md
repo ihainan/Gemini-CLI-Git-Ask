@@ -546,13 +546,22 @@ tests/
 │   ├── config/              # Configuration layer tests
 │   ├── services/            # Business logic layer tests
 │   └── utils/               # Utility function tests
-└── integration/             # Integration tests
-    ├── setup-integration.ts # Integration test mocking setup
-    ├── test-app.ts          # Express test application factory
-    └── api/                 # API endpoint tests
-        ├── ask-endpoint.test.ts    # Ask API integration tests (23 tests)
-        ├── health-endpoints.test.ts # Health check tests (15 tests)
-        └── middleware.test.ts      # Middleware tests (22 tests)
+├── integration/             # Integration tests (with mocks)
+│   ├── setup-integration.ts # Integration test mocking setup
+│   ├── test-app.ts          # Express test application factory
+│   └── api/                 # API endpoint tests
+│       ├── ask-endpoint.test.ts    # Ask API integration tests (23 tests)
+│       ├── health-endpoints.test.ts # Health check tests (15 tests)
+│       └── middleware.test.ts      # Middleware tests (22 tests)
+└── real-integration/        # Real integration tests (no mocks)
+    ├── setup-real-integration.ts  # Real test setup and environment checking
+    ├── global-setup.ts            # Global setup (CLI tool verification)
+    ├── global-teardown.ts         # Global cleanup
+    ├── test.env.example           # Test environment configuration template
+    ├── run-tests.sh              # Convenient test runner script
+    ├── gemini-cli.test.ts        # Real Gemini CLI tests (9 tests)
+    ├── repository-manager.test.ts # Real repository operations tests (11 tests)
+    └── full-api.test.ts          # End-to-end API tests (8 tests)
 ```
 
 ### 15.3 Testing Utilities
@@ -570,7 +579,25 @@ External dependencies are mocked to ensure test reliability:
 - **File System**: Repository storage operations
 - **Network**: HTTP requests
 
-### 15.5 Coverage Requirements
+### 15.5 Real Integration Testing
+
+Real integration tests validate the complete system with actual external services:
+
+- **Purpose**: End-to-end validation with real APIs and repositories
+- **Scope**: Complete system testing without mocks
+- **Requirements**: Gemini CLI installed, network access, environment configuration
+- **Test Types**:
+  - **Gemini CLI Tests**: CLI availability, real AI queries, timeout handling
+  - **Repository Manager Tests**: Actual GitHub repository cloning and management
+  - **Full API Tests**: Complete request-response cycle with real services
+
+**Configuration:**
+- Environment-based activation with `REAL_INTEGRATION_ENABLED=true`
+- Configurable timeouts and cleanup options
+- Multiple setup methods (scripts, environment variables, config files)
+- Uses local Gemini CLI (no API keys required)
+
+### 15.6 Coverage Requirements
 
 - **Statements**: 95%+ (currently 37.4% - baseline with integration tests completed)
 - **Branches**: 85%+ (currently 37.5% - requires additional service layer testing)
@@ -607,8 +634,9 @@ External dependencies are mocked to ensure test reliability:
 - Comprehensive error handling and validation ✅ (complete middleware implementation)
 - Background cleanup service with node-cron ✅ (fully implemented in RepositoryManager)
 - Health check endpoints and monitoring ✅
-- Unit testing with Jest ✅ (framework complete, 136 tests, improved coverage with integration tests)
-- Integration testing with Jest ✅ (complete implementation, 60 tests, 100% pass rate)
+- Unit testing with Jest ✅ (framework complete, 139 tests, improved coverage with integration tests)
+- Integration testing with Jest ✅ (complete implementation, 62 tests, 100% pass rate)
+- Real integration testing with Jest ✅ (complete implementation, 28 tests, 27/28 passing)
 
 ### Phase 3: Enhancement
 - Docker containerization with Node.js Alpine base ✅ (complete implementation with multi-stage builds)
@@ -653,9 +681,10 @@ External dependencies are mocked to ensure test reliability:
   - Enhanced robustness for production environments with self-healing capabilities
   - 86.06% statement coverage, 100% function coverage
 - **Testing Framework**: Complete Jest setup with CI support ✅
-  - 140+ test cases with comprehensive API coverage (integration + unit tests)
+  - 200+ test cases with comprehensive API coverage (unit + integration + real integration tests)
   - Unit tests for ConfigManager, Logger, Repository Manager, Gemini Executor, and Gemini Factory
   - Complete integration tests for API endpoints (ask, health, middleware)
+  - Real integration tests for end-to-end validation with actual services
   - Enhanced test utilities with SingleRepositoryStats support
   - Comprehensive mocks including updated Gemini CLI format
   - CI-friendly configuration with 100% integration test pass rate
@@ -715,8 +744,9 @@ service/
 │   └── utils/
 │       └── gemini-factory.ts ✅ (complete factory utilities)
 ├── tests/ ✅ (complete testing framework with comprehensive coverage)
-│   ├── unit/ (ConfigManager, Logger, Repository Manager, Gemini Executor, Gemini Factory - 136 tests)
+│   ├── unit/ (ConfigManager, Logger, Repository Manager, Gemini Executor, Gemini Factory - 139 tests)
 │   ├── integration/ (API endpoints, health checks, middleware - 62 tests, 100% pass rate)
+│   ├── real-integration/ (Gemini CLI, Repository Manager, Full API - 28 tests, 27/28 passing)
 │   ├── helpers/ (comprehensive test utilities and factories)
 │   └── __mocks__/ (advanced external service mocks with proper cleanup)
 ├── Dockerfile ✅ (multi-stage production-ready Docker build)
@@ -739,6 +769,7 @@ docker/
 ### Testing Status
 - **Unit Tests**: 139 tests (ConfigManager, Logger, Repository Manager, Gemini Executor, Gemini Factory fully implemented)
 - **Integration Tests**: 62 tests (Ask endpoints, Health endpoints, Middleware - all fully implemented with 100% pass rate)
+- **Real Integration Tests**: 28 tests (Gemini CLI, Repository Manager, Full API - 27/28 passing, 1 API quota failure)
 - **Mock Architecture**: Completely resolved with inline mock strategy - 100% reliability
 - **Repository Manager Tests**: 3/3 tests passing after resolving Jest mock timing issues
 - **Docker Container Tests**: Complete end-to-end testing with real repositories (Hello-World, VS Code)
@@ -747,7 +778,7 @@ docker/
 - **Test Coverage**: 37.4% statements, 37.5% branches, 47.2% functions (baseline coverage with 62 integration tests)
 - **Test Infrastructure**: Complete with utilities, mocks, and CI support - production ready with resolved mock issues
 
-This architecture provides a robust foundation for the Git repository Q&A service with comprehensive testing infrastructure and production-ready containerization. All core service implementations have been completed, including the full REST API with request validation, repository management with concurrency control, intelligent Gemini CLI integration, and complete Docker containerization. The service features:
+This architecture provides a robust foundation for the Git repository Q&A service with comprehensive testing infrastructure and production-ready containerization. All core service implementations have been completed, including the full REST API with request validation, repository management with concurrency control, intelligent Gemini CLI integration, complete Docker containerization, and end-to-end real integration testing. The service features:
 
 **Production Readiness:**
 - Complete Docker containerization with multi-stage builds
@@ -757,7 +788,7 @@ This architecture provides a robust foundation for the Git repository Q&A servic
 - Persistent data management with dedicated volumes
 
 **Service Reliability:**
-- 140+ tests with comprehensive API coverage ensuring production-quality reliability
+- 200+ tests with comprehensive API coverage ensuring production-quality reliability
 - Validated performance with real-world repository testing (12-21 second response times)
 - Robust error handling with proper HTTP status codes and structured responses
 - Concurrent request handling with proper locking mechanisms
@@ -768,7 +799,7 @@ This architecture provides a robust foundation for the Git repository Q&A servic
 - Seamless Gemini CLI authentication integration
 - Automated repository caching and cleanup management
 
-The service is now fully ready for production deployment in any Docker-compatible environment, providing enterprise-grade reliability, security, and performance for Git repository code analysis.
+The service is now fully ready for production deployment in any Docker-compatible environment, providing enterprise-grade reliability, security, and performance for Git repository code analysis. The comprehensive test suite includes unit tests, integration tests, and real integration tests, ensuring robust validation at all levels.
 
 ## 18. Recent Architecture Updates
 

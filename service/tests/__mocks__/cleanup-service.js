@@ -2,11 +2,8 @@
  * Mock implementation of CleanupService
  */
 
-export class MockCleanupService {
-  private static instance: MockCleanupService;
-  private config: any;
-
-  constructor(repositoryManager?: any, config?: any) {
+class MockCleanupService {
+  constructor(repositoryManager, config) {
     this.config = config || {
       enabled: true,
       intervalHours: 24,
@@ -16,14 +13,14 @@ export class MockCleanupService {
     };
   }
 
-  public static getInstance(): MockCleanupService {
+  static getInstance() {
     if (!MockCleanupService.instance) {
       MockCleanupService.instance = new MockCleanupService();
     }
     return MockCleanupService.instance;
   }
 
-  public getStatus(): any {
+  getStatus() {
     return {
       enabled: true,
       scheduled: true,
@@ -32,21 +29,24 @@ export class MockCleanupService {
     };
   }
 
-  public async triggerCleanup(): Promise<void> {
+  async triggerCleanup() {
     // Mock manual cleanup trigger
     return Promise.resolve();
   }
 
-  public async start(): Promise<void> {
+  async start() {
     // Mock service start
     return Promise.resolve();
   }
 
-  public async stop(): Promise<void> {
+  async stop() {
     // Mock service stop
     return Promise.resolve();
   }
 }
 
-// Export the MockCleanupService as CleanupService
-export const CleanupService = MockCleanupService; 
+// CommonJS exports
+module.exports = {
+  MockCleanupService,
+  CleanupService: MockCleanupService
+}; 

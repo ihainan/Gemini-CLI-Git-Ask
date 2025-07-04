@@ -2,21 +2,19 @@
  * Mock implementation of RepositoryManager
  */
 
-export class MockRepositoryManager {
-  private static instance: MockRepositoryManager;
-
-  constructor(config?: any) {
+class MockRepositoryManager {
+  constructor(config) {
     // Mock constructor - accept config but ignore it
   }
 
-  public static getInstance(): MockRepositoryManager {
+  static getInstance() {
     if (!MockRepositoryManager.instance) {
       MockRepositoryManager.instance = new MockRepositoryManager();
     }
     return MockRepositoryManager.instance;
   }
 
-  public async ensureRepository(url: string, branch: string = 'main'): Promise<any> {
+  async ensureRepository(url, branch = 'main') {
     // Mock successful repository info
     return {
       url,
@@ -34,7 +32,7 @@ export class MockRepositoryManager {
     };
   }
 
-  public async getSingleRepositoryStats(repositoryPath: string): Promise<any> {
+  async getSingleRepositoryStats(repositoryPath) {
     // Mock single repository statistics
     return {
       fileCount: 25,
@@ -43,7 +41,7 @@ export class MockRepositoryManager {
     };
   }
 
-  public async getRepositoryStats(): Promise<any> {
+  async getRepositoryStats() {
     // Mock repository statistics
     return {
       total_repositories: 5,
@@ -65,16 +63,19 @@ export class MockRepositoryManager {
     };
   }
 
-  public async cleanup(): Promise<void> {
+  async cleanup() {
     // Mock cleanup - do nothing
     return Promise.resolve();
   }
 
-  public async destroy(): Promise<void> {
+  async destroy() {
     // Mock destroy - do nothing
     return Promise.resolve();
   }
 }
 
-// Mock the RepositoryManager class
-export const RepositoryManager = MockRepositoryManager; 
+// CommonJS exports
+module.exports = {
+  MockRepositoryManager,
+  RepositoryManager: MockRepositoryManager
+}; 

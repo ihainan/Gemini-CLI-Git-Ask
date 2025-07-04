@@ -47,7 +47,7 @@ module.exports = {
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
     '^@api/(.*)$': '<rootDir>/src/api/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
-    '^child_process$': '<rootDir>/tests/__mocks__/child_process.ts'
+    '^child_process$': '<rootDir>/tests/__mocks__/child_process.js'
   },
   
   // Coverage configuration

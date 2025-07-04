@@ -2,13 +2,16 @@
  * Mock implementation of GeminiFactory
  */
 
-import { MockGeminiExecutor } from './gemini-executor';
+const { MockGeminiExecutor } = require('./gemini-executor');
 
-export class MockGeminiFactory {
-  public static createExecutor(config: any): MockGeminiExecutor {
+class MockGeminiFactory {
+  static createExecutor(config) {
     return new MockGeminiExecutor(config);
   }
 }
 
-// Mock the GeminiFactory class
-export const GeminiFactory = MockGeminiFactory; 
+// CommonJS exports
+module.exports = {
+  MockGeminiFactory,
+  GeminiFactory: MockGeminiFactory
+}; 
