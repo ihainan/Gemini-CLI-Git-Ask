@@ -15,9 +15,11 @@ services:
       - NODE_ENV=production
       - SERVER_HOST=0.0.0.0
       - SERVER_PORT=8080
+      # Alternative: Use API key instead of auth file
+      # - GEMINI_API_KEY=${GEMINI_API_KEY}
     volumes:
       # Mount Gemini CLI authentication directory
-      - ~/.gemini:/home/appuser/.gemini:ro
+      - ~/.gemini:/home/node/.gemini:ro
       # Mount data directories for persistence
       - gemini_repositories:/app/repositories
       - gemini_logs:/app/logs
