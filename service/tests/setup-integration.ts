@@ -39,6 +39,13 @@ jest.mock('simple-git', () => {
 
 jest.mock('child_process');
 
+jest.mock('../src/services/cleanup-service', () => {
+  const { CleanupService } = require('./__mocks__/cleanup-service');
+  return {
+    CleanupService
+  };
+});
+
 // Initialize test environment
 beforeAll(async () => {
   // Ensure config is loaded

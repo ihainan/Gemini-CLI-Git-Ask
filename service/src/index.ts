@@ -5,6 +5,10 @@ import { ConfigManager } from './config/config-manager';
 import { logger, configureLogger } from './utils/logger';
 import { createApiRoutes } from './api/routes';
 import { errorHandler, notFoundHandler } from './api/middleware/error-handler';
+import { RepositoryManager } from './services/repository-manager';
+import { createCleanupService, CleanupService } from './services/cleanup-service';
+
+let cleanupService: CleanupService | null = null;
 
 async function bootstrap() {
   try {
@@ -14,6 +18,21 @@ async function bootstrap() {
     
     // Reconfigure logger with loaded configuration
     configureLogger(config.getAll());
+    
+    // Initialize Repository Manager
+    const repositoryManager = new RepositoryManager({
+      storagePath: config.get('repository.storage_path'),
+      cloneMethod: config.get('repository.clone_method'),
+      cloneDepth: config.get('repository.clone_depth'),
+      updateThresholdHours: config.get('repository.update_threshold_hours'),
+      accessTimeoutHours: config.get('repository.access_timeout_hours'),
+      maxConcurrentOperations: config.get('repository.max_concurrent_operations'),
+      defaultBranch: config.get('repository.default_branch')
+    });
+    
+    // Initialize Cleanup Service
+    cleanupService = createCleanupService(repositoryManager);
+    await cleanupService.start();
     
     // Create Express app
     const app = express();
@@ -67,15 +86,29 @@ async function bootstrap() {
 }
 
 // Handle graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   logger.info('SIGTERM received. Shutting down gracefully...');
-  process.exit(0);
+  await shutdown();
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   logger.info('SIGINT received. Shutting down gracefully...');
-  process.exit(0);
+  await shutdown();
 });
+
+async function shutdown() {
+  try {
+    if (cleanupService) {
+      logger.info('Stopping cleanup service...');
+      await cleanupService.stop();
+    }
+    logger.info('Shutdown complete');
+    process.exit(0);
+  } catch (error) {
+    logger.error('Error during shutdown:', error);
+    process.exit(1);
+  }
+}
 
 // Start the application
 bootstrap().catch((error) => {

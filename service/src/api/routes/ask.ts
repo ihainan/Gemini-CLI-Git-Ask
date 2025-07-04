@@ -7,12 +7,14 @@ import { Request, Response, NextFunction } from 'express';
 import { AskRequest, AskSuccessResponse, ApiException, ApiErrorCode } from '../../types';
 import { RepositoryManager } from '../../services/repository-manager';
 import { GeminiExecutor } from '../../services/gemini-executor';
+import { CleanupService } from '../../services/cleanup-service';
 import { logger } from '../../utils/logger';
 import { ConfigManager } from '../../config/config-manager';
 
 export class AskController {
   private repositoryManager: RepositoryManager;
   private geminiExecutor: GeminiExecutor;
+  private cleanupService: CleanupService;
 
   constructor() {
     const config = ConfigManager.getInstance();
@@ -38,6 +40,15 @@ export class AskController {
         maxSizeMb: config.get('gemini.auto_all_files_thresholds.max_size_mb')
       },
       basePrompt: config.get('gemini.base_prompt')
+    });
+
+    // Initialize Cleanup Service
+    this.cleanupService = new CleanupService(this.repositoryManager, {
+      enabled: config.get('cleanup.enabled'),
+      intervalHours: config.get('cleanup.interval_hours'),
+      retentionDays: config.get('cleanup.retention_days'),
+      maxStorageGb: config.get('cleanup.max_storage_gb'),
+      cleanupOnStartup: config.get('cleanup.cleanup_on_startup')
     });
   }
 
@@ -177,6 +188,46 @@ export class AskController {
       next(error);
     }
   }
+
+  /**
+   * Get cleanup service status
+   */
+  async handleCleanupStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      logger.debug('Getting cleanup service status');
+      
+      const status = this.cleanupService.getStatus();
+      
+      res.json({
+        status: 'success',
+        cleanup_service: status
+      });
+      
+    } catch (error) {
+      logger.error('Cleanup status request failed:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * Manually trigger cleanup
+   */
+  async handleCleanupTrigger(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      logger.info('Manual cleanup triggered');
+      
+      await this.cleanupService.triggerCleanup();
+      
+      res.json({
+        status: 'success',
+        message: 'Cleanup triggered successfully'
+      });
+      
+    } catch (error) {
+      logger.error('Manual cleanup trigger failed:', error);
+      next(error);
+    }
+  }
 }
 
 // Lazy initialization of controller
@@ -197,4 +248,10 @@ export const handleStatsRequest = (req: Request, res: Response, next: NextFuncti
   getController().handleStatsRequest(req, res, next);
 
 export const handleGeminiHealthCheck = (req: Request, res: Response, next: NextFunction) => 
-  getController().handleGeminiHealthCheck(req, res, next); 
+  getController().handleGeminiHealthCheck(req, res, next);
+
+export const handleCleanupStatus = (req: Request, res: Response, next: NextFunction) => 
+  getController().handleCleanupStatus(req, res, next);
+
+export const handleCleanupTrigger = (req: Request, res: Response, next: NextFunction) => 
+  getController().handleCleanupTrigger(req, res, next); 

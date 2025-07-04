@@ -46,6 +46,7 @@ Try our live demo at: **https://gemini-demo.ihainan.me/**
 4. **Start the service**:
    ```bash
    cd ../docker
+   mkdir -p ./data/logs ./data/repositories ./data/locks
    docker-compose up -d
    ```
 
@@ -285,42 +286,6 @@ npm run build
 
 # Test the MCP server
 node dist/index.js
-```
-
-### Docker Development
-
-```bash
-# From project root
-# Configure service settings
-cd service
-cp config.yaml.example config.yaml
-# Edit config.yaml with your settings
-
-# Start development environment
-cd ../docker
-docker-compose -f docker-compose-dev.yaml up -d
-
-# View logs
-docker-compose logs -f
-```
-
-### Project Structure
-
-```
-├── service/                    # RESTful API Service
-│   ├── src/                   # Source code
-│   ├── tests/                 # Test files
-│   ├── config.yaml           # Service configuration
-│   ├── Dockerfile            # Docker configuration
-│   └── package.json          # Node.js dependencies
-├── mcp/                      # MCP Server
-│   ├── src/                  # MCP server source
-│   ├── dist/                 # Compiled output
-│   └── package.json          # NPM package configuration
-├── docker/                   # Docker deployment
-│   ├── docker-compose.yml    # Production compose
-│   └── docker-compose-dev.yaml # Development compose
-└── README.md                 # This file
 ```
 
 ## Additional Resources

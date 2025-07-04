@@ -24,10 +24,17 @@ module.exports = {
         target: 'ES2020',
         module: 'commonjs',
         esModuleInterop: true,
-        allowSyntheticDefaultImports: true
+        allowSyntheticDefaultImports: true,
+        sourceMap: false,
+        inlineSourceMap: false
       }
     }]
   },
+  
+  // Transform ignore patterns - ensure mocks are transformed
+  transformIgnorePatterns: [
+    'node_modules/(?!(.*\\.mjs$))'
+  ],
   
   // Module file extensions
   moduleFileExtensions: ['ts', 'js', 'json'],
@@ -99,7 +106,9 @@ module.exports = {
         target: 'ES2020',
         module: 'commonjs',
         esModuleInterop: true,
-        allowSyntheticDefaultImports: true
+        allowSyntheticDefaultImports: true,
+        sourceMap: false,
+        inlineSourceMap: false
       }
     }
   },

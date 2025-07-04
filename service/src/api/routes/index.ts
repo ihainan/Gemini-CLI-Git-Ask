@@ -4,7 +4,7 @@
 
 import { Router } from 'express';
 import { validateAskRequest } from '../middleware/validation';
-import { handleAskRequest, handleStatsRequest, handleGeminiHealthCheck } from './ask';
+import { handleAskRequest, handleStatsRequest, handleGeminiHealthCheck, handleCleanupStatus, handleCleanupTrigger } from './ask';
 
 export function createApiRoutes(): Router {
   const router = Router();
@@ -17,6 +17,10 @@ export function createApiRoutes(): Router {
 
   // Gemini CLI health check
   router.get('/v1/gemini/health', handleGeminiHealthCheck);
+
+  // Cleanup service endpoints
+  router.get('/v1/cleanup/status', handleCleanupStatus);
+  router.post('/v1/cleanup/trigger', handleCleanupTrigger);
 
   return router;
 } 
