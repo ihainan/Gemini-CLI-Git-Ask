@@ -48,6 +48,13 @@ export class RepositoryManager {
       } catch (error) {
         logger.warn(`Failed to read metadata for ${localPath}:`, error);
       }
+    } else {
+      // If the specific branch path doesn't exist, check for other branches of the same repository
+      const existingRepo = await this.findExistingRepository(normalizedUrl);
+      if (existingRepo) {
+        logger.info(`Repository already exists with different branch: ${existingRepo.localPath} (branch: ${existingRepo.branch}), using existing repository`);
+        return existingRepo;
+      }
     }
 
     return {
@@ -774,5 +781,40 @@ export class RepositoryManager {
         { url, error }
       );
     }
+  }
+
+  /**
+   * Find existing repository with the same URL but potentially different branch
+   */
+  private async findExistingRepository(url: string): Promise<RepositoryInfo | undefined> {
+    try {
+      const repositories = await fs.readdir(this.config.storagePath, { withFileTypes: true });
+      for (const dir of repositories) {
+        if (!dir.isDirectory()) continue;
+        
+        const repoPath = path.join(this.config.storagePath, dir.name);
+        if (!await this.checkRepositoryExists(repoPath)) continue;
+        
+        try {
+          const metadata = await this.getRepositoryMetadata(repoPath);
+          if (metadata.url === url) {
+            return {
+              url: metadata.url,
+              branch: metadata.branch,
+              localPath: repoPath,
+              exists: true,
+              metadata
+            };
+          }
+        } catch (error) {
+          // Skip repositories with missing or corrupted metadata
+          logger.debug(`Skipping repository ${repoPath} due to metadata error:`, error);
+          continue;
+        }
+      }
+    } catch (error) {
+      logger.warn(`Failed to scan for existing repositories:`, error);
+    }
+    return undefined;
   }
 } 
