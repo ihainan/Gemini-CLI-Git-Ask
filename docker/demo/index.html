@@ -813,6 +813,19 @@
             questionField.dataset.wasAutoFilled = 'true';
         });
 
+        // Helper function to format execution time
+        function formatExecutionTime(milliseconds) {
+            if (milliseconds < 1000) {
+                return `${milliseconds}ms`;
+            } else if (milliseconds < 60000) {
+                return `${(milliseconds / 1000).toFixed(1)}s`;
+            } else {
+                const minutes = Math.floor(milliseconds / 60000);
+                const seconds = ((milliseconds % 60000) / 1000).toFixed(1);
+                return `${minutes}m ${seconds}s`;
+            }
+        }
+
         // Form submission
         document.getElementById('askForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -842,22 +855,71 @@
                     })
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                // Try to parse JSON response regardless of status
+                let data;
+                try {
+                    data = await response.json();
+                } catch (parseError) {
+                    // If JSON parsing fails, throw with status info
+                    throw new Error(`HTTP ${response.status}: Unable to parse response`);
                 }
 
-                const data = await response.json();
-                
                 // Hide loading
                 document.getElementById('loading').style.display = 'none';
                 
                 // Show result
                 const resultContent = document.getElementById('resultContent');
-                if (data.answer) {
+                const resultTitle = document.querySelector('.result-title');
+                
+                if (!response.ok) {
+                    // Handle error responses with detailed backend error info
+                    let errorMessage = 'Unknown error occurred';
+                    let errorDetails = `HTTP ${response.status}`;
+                    
+                    if (data.message) {
+                        errorMessage = data.message;
+                    }
+                    
+                    if (data.details && data.details.stderr) {
+                        // Extract useful error information from stderr
+                        const stderr = data.details.stderr;
+                        if (stderr.includes('Resource has been exhausted') || stderr.includes('quota')) {
+                            errorMessage = 'API quota has been exhausted. Please try again later.';
+                            errorDetails = 'Gemini API quota limit reached';
+                        } else if (stderr.includes('timeout') || stderr.includes('timed out')) {
+                            errorMessage = 'Request timed out. Please try with a smaller repository or simpler question.';
+                            errorDetails = 'Request timeout';
+                        } else if (stderr.includes('authentication') || stderr.includes('auth')) {
+                            errorMessage = 'Authentication failed. Please check Gemini CLI configuration.';
+                            errorDetails = 'Authentication error';
+                        } else {
+                            errorDetails = stderr.length > 200 ? stderr.substring(0, 200) + '...' : stderr;
+                        }
+                    }
+                    
+                    // Update title for error
+                    resultTitle.textContent = 'Error Response';
+                    
+                    resultContent.innerHTML = `
+                        <div style="color: #d32f2f; padding: 15px; background: #ffebee; border-radius: 6px;">
+                            <strong>Error:</strong> ${errorMessage}
+                            <br><small style="color: #666; margin-top: 8px; display: block;">Details: ${errorDetails}</small>
+                        </div>
+                    `;
+                } else if (data.answer) {
+                    // Update title with execution time for successful responses
+                    let titleText = 'AI Assistant Response';
+                    if (data.execution_time) {
+                        titleText += ` (${formatExecutionTime(data.execution_time)})`;
+                    }
+                    resultTitle.textContent = titleText;
+                    
                     resultContent.innerHTML = marked.parse(data.answer);
                 } else if (data.error) {
+                    resultTitle.textContent = 'Error Response';
                     resultContent.innerHTML = `<div style="color: #d32f2f; padding: 15px; background: #ffebee; border-radius: 6px;"><strong>Error:</strong> ${data.error}</div>`;
                 } else {
+                    resultTitle.textContent = 'AI Assistant Response';
                     resultContent.innerHTML = '<div style="color: #f57c00; padding: 15px; background: #fff3e0; border-radius: 6px;">No answer received from the AI assistant.</div>';
                 }
                 
@@ -874,6 +936,10 @@
                 
                 // Hide loading
                 document.getElementById('loading').style.display = 'none';
+                
+                // Update title for network/parsing errors
+                const resultTitle = document.querySelector('.result-title');
+                resultTitle.textContent = 'Connection Error';
                 
                 // Show error
                 document.getElementById('resultContent').innerHTML = `
