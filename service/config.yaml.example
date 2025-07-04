@@ -35,6 +35,12 @@ repository:
   access_timeout_hours: 72
   max_concurrent_operations: 10
   default_branch: "main"  # fallback when no branch specified
+  
+  # Lock configuration for concurrent access control
+  lock_settings:
+    retries: 30              # Maximum retry attempts for lock acquisition
+    retry_interval_ms: 1000  # Interval between retries in milliseconds
+    stale_timeout_ms: 120000 # Lock expiration timeout in milliseconds (2 minutes)
 
 cleanup:
   enabled: true

@@ -9,6 +9,8 @@ services:
     restart: unless-stopped
     ports:
       - "18080:8080"
+    # Use current user's UID and GID to avoid permission issues
+    user: "${UID:-1000}:${GID:-1000}"
     environment:
       - NODE_ENV=production
       - SERVER_HOST=0.0.0.0

@@ -673,12 +673,25 @@ export class RepositoryManager {
       // Ensure the lock directory exists
       await fs.mkdir(this.lockDir, { recursive: true });
       
+      // Use config-based lock settings with fallbacks
+      const lockSettings = this.config.lockSettings || {};
+      const defaultRetries = 30;           // Increased from 5 to 30
+      const defaultRetryWait = 1000;       // Increased from 500ms to 1000ms
+      const defaultStaleTimeout = 120000;  // Increased from 60s to 120s
+      
       const lockOptions = {
-        retries: options?.retries || 5,
-        retryWait: options?.retryInterval || 500,
-        stale: options?.timeout || 60000, // Default 60 seconds stale time
+        retries: options?.retries || lockSettings.retries || defaultRetries,
+        retryWait: options?.retryInterval || lockSettings.retryIntervalMs || defaultRetryWait,
+        stale: options?.timeout || lockSettings.staleTimeoutMs || defaultStaleTimeout,
         realpath: false // Don't resolve symlinks
       };
+      
+      logger.debug(`Acquiring lock ${lockPath} with options:`, {
+        retries: lockOptions.retries,
+        retryWait: lockOptions.retryWait,
+        stale: lockOptions.stale,
+        maxWaitTime: lockOptions.retries * lockOptions.retryWait
+      });
       
       return await lockfile.lock(lockPath, lockOptions);
     } catch (error) {

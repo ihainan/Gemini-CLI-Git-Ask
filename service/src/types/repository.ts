@@ -74,4 +74,10 @@ export interface RepositoryManagerConfig {
   accessTimeoutHours: number;
   maxConcurrentOperations: number;
   defaultBranch: string;
+  // Lock configuration
+  lockSettings?: {
+    retries?: number;
+    retryIntervalMs?: number;
+    staleTimeoutMs?: number;
+  };
 } 

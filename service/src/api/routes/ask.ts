@@ -27,7 +27,12 @@ export class AskController {
       updateThresholdHours: config.get('repository.update_threshold_hours'),
       accessTimeoutHours: config.get('repository.access_timeout_hours'),
       maxConcurrentOperations: config.get('repository.max_concurrent_operations'),
-      defaultBranch: 'main'
+      defaultBranch: 'main',
+      lockSettings: {
+        retries: config.get('repository.lock_settings.retries'),
+        retryIntervalMs: config.get('repository.lock_settings.retry_interval_ms'),
+        staleTimeoutMs: config.get('repository.lock_settings.stale_timeout_ms')
+      }
     });
 
     // Initialize Gemini Executor
