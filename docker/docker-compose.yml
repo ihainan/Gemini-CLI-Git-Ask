@@ -1,30 +1,53 @@
 version: '3.8'
 
 services:
+  # Initialize Gemini authentication directory with correct permissions
+  init-gemini:
+    image: busybox
+    volumes:
+      - ~/.gemini:/host_gemini:ro
+      - ./data/gemini_auth:/app/.gemini
+    environment:
+      - UID=${UID}
+    command: >
+      sh -c "
+        echo 'Setting up Gemini authentication...'
+        mkdir -p /app/.gemini
+        if [ -d /host_gemini ]; then
+          cp -r /host_gemini/* /app/.gemini/ 2>/dev/null || echo 'No files to copy'
+          echo 'Gemini auth files copied successfully'
+        else
+          echo 'Warning: Gemini CLI not authenticated. Please run: gemini auth login'
+        fi
+        chown -R ${UID:-1000} /app/.gemini
+        echo 'Permissions set for gemini_auth directory'
+      "
+    user: "0:0"
+    restart: "no"
+
   gemini-git-ask:
+    depends_on:
+      - init-gemini
     build:
       context: ../service
       dockerfile: Dockerfile
     container_name: gemini-git-ask-service
     restart: unless-stopped
+    user: "${UID:-1000}:${GID:-1000}"
     ports:
       - "18080:8080"
-    # Use current user's UID and GID to avoid permission issues
-    user: "${UID:-1000}:${GID:-1000}"
     environment:
       - NODE_ENV=production
       - SERVER_HOST=0.0.0.0
       - SERVER_PORT=8080
-      # Alternative: Use API key instead of auth file
+      - HOME=/app
       # - GEMINI_API_KEY=${GEMINI_API_KEY}
     volumes:
-      # Mount Gemini CLI authentication directory
-      - ~/.gemini:/home/node/.gemini:ro
-      # Mount data directories for persistence
-      - gemini_repositories:/app/repositories
-      - gemini_logs:/app/logs
-      - gemini_locks:/app/repository_locks
-      # Mount configuration file if you want to customize it
+      # Gemini auth folder (now read-write)
+      - ./data/gemini_auth:/app/.gemini
+      - ./data/gemini_repositories:/app/repositories
+      - ./data/gemini_logs:/app/logs
+      - ./data/gemini_locks:/app/repository_locks
       - ../service/config.yaml:/app/config.yaml:ro
     networks:
       - gemini-network
@@ -40,26 +63,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-volumes:
-  gemini_repositories:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data/repositories
-  gemini_logs:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data/logs
-  gemini_locks:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data/locks
-
 networks:
   gemini-network:
-    driver: bridge 
+    driver: bridge

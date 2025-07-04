@@ -46,7 +46,7 @@ Try our live demo at: **https://gemini-demo.ihainan.me/**
 4. **Start the service**:
    ```bash
    cd ../docker
-   mkdir -p ./data/logs ./data/repositories ./data/locks
+   mkdir -p data/{gemini_auth,gemini_repositories,gemini_logs,gemini_locks}
    docker-compose up -d
    ```
 

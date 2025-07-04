@@ -6,7 +6,7 @@ server:
 gemini:
   model: "gemini-2.5-flash"
   api_timeout: 300
-  all_files_mode: "auto"  # "always", "never", "auto"
+  all_files_mode: "never"  # "always", "never", "auto"
   auto_all_files_thresholds:
     max_files: 5
     max_size_mb: 1
