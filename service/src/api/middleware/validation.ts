@@ -160,7 +160,7 @@ export const askRequestSchema: ValidationSchema = {
     required: false,
     type: 'number',
     min: 10,
-    max: 3600
+    max: 60000
   }
 };
 
